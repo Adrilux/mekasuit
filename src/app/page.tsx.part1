@@ -1,0 +1,52 @@
+import type { Metadata } from "next"
+import Link from "next/link"
+import {
+  Wrench,
+  ClipboardList,
+  Package,
+  BarChart3,
+  Shield,
+  Smartphone,
+  Check,
+  ArrowRight,
+  ChevronRight,
+} from "lucide-react"
+import { LandingHeader } from "@/components/landing/landing-header"
+
+export const metadata: Metadata = {
+  title: "GMAO Pro — La maintenance industrielle simplifiée",
+  description: "Gérez vos machines, interventions et stocks depuis une seule plateforme cloud. Conçu pour les PME industrielles.",
+}
+
+const features = [
+  { icon: Wrench, title: "Suivi des machines", description: "Inventaire complet, QR codes terrain, historique des pannes par équipement." },
+  { icon: ClipboardList, title: "Gestion des interventions", description: "Créez, assignez et clôturez vos interventions correctives et préventives." },
+  { icon: Package, title: "Gestion des stocks", description: "Suivi des pièces détachées, alertes rupture, consommation par intervention." },
+  { icon: BarChart3, title: "Rapports & KPIs", description: "MTBF, taux de disponibilité, charge technicien — exportez vos données." },
+  { icon: Shield, title: "Multi-sites sécurisé", description: "Isolation totale des données par entreprise, accès par rôles et permissions." },
+  { icon: Smartphone, title: "Accessible partout", description: "Application web PWA, utilisable sur tablette et mobile sans installation." },
+]
+
+const steps = [
+  { number: "01", title: "Nous créons votre espace", description: "En 24h, votre environnement est configuré avec vos sites et votre équipe." },
+  { number: "02", title: "Vous importez vos machines", description: "Ajoutez vos équipements, scannez les QR codes générés automatiquement." },
+  { number: "03", title: "Votre équipe prend en main", description: "Les techniciens reçoivent leurs accès et peuvent gérer les interventions." },
+]
+
+const pricingPlans = [
+  {
+    name: "Starter", price: "99€", period: "/mois", description: "Pour les petites équipes qui démarrent",
+    features: ["1 site de production", "5 utilisateurs inclus", "GMAO + Gestion des stocks", "QR codes illimités", "Support email"],
+    cta: "Démarrer", href: "/login", popular: false,
+  },
+  {
+    name: "Pro", price: "249€", period: "/mois", description: "Pour les PME en croissance",
+    features: ["3 sites de production", "20 utilisateurs inclus", "Tous les modules", "Rapports & exports", "Support prioritaire"],
+    cta: "Choisir Pro", href: "/login", popular: true,
+  },
+  {
+    name: "Enterprise", price: "Sur devis", period: "", description: "Pour les grands comptes industriels",
+    features: ["Sites illimités", "Utilisateurs illimités", "API & intégrations", "Rapports avancés", "Support dédié & SLA"],
+    cta: "Nous contacter", href: "mailto:contact@gmaopro.fr", popular: false,
+  },
+]

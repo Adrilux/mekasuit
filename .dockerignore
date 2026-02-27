@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log*
+
+# Next.js
+.next
+out
+
+# Env — JAMAIS dans l'image
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+
+# Dev tooling
+.vscode
+*.md
+write_*.py
+scripts/
+
+# Prisma — le client est régénéré au build
+# (les migrations sont déployées séparément)
+prisma/dev.db
+prisma/*.db-journal
+
+# CI / misc
+.vercel
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Claude AI memory
+.claude
+CLAUDE_RULES.md
+DEV_*.md
+PROJECT_STATE.md
+GMAO_*.md

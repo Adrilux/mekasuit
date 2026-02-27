@@ -1,0 +1,508 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Les URLs sont définies dans prisma.config.ts (Prisma 7+)
+}
+
+// =============================================================================
+// BETTER AUTH — tables requises par prismaAdapter
+// =============================================================================
+
+model User {
+  id                 String    @id
+  name               String
+  email              String    @unique
+  emailVerified      Boolean
+  image              String?
+  createdAt          DateTime
+  updatedAt          DateTime
+  tenantId           String?   // champ additionnel injecté via better-auth additionalFields
+  mustChangePassword Boolean   @default(false) // obligatoire si compte créé par un admin
+
+  sessions Session[]
+  accounts Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+// =============================================================================
+// TENANT (entreprise cliente)
+// =============================================================================
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique // utilisé dans l'URL ou le sous-domaine
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sites       Site[]
+  tenantUsers TenantUser[]
+  modules     TenantModule[]
+  license     License?
+  roles       TenantRole[]
+
+  @@map("tenants")
+}
+
+// Licence associée au tenant (limites sites / users / modules)
+model License {
+  id            String   @id @default(cuid())
+  tenantId      String   @unique
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  maxSites      Int      @default(1)
+  maxUsers      Int      @default(5)
+  billingPeriod String   @default("monthly") // monthly | yearly
+  renewsAt      DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("licenses")
+}
+
+// Modules activés par tenant
+model TenantModule {
+  id          String     @id @default(cuid())
+  tenantId    String
+  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  module      ModuleName
+  isActive    Boolean    @default(false)
+  activatedAt DateTime?
+
+  @@unique([tenantId, module])
+  @@map("tenant_modules")
+}
+
+enum ModuleName {
+  GMAO                 // Noyau, toujours actif
+  STOCK_MANAGEMENT     // Gestion des pièces et du stock
+  AI_ASSISTANT         // Assistant IA (Groq)
+  ADVANCED_REPORTS     // Rapports avancés (MTBF, charge technicien, valorisation stock)
+  INTER_SITE_TRANSFERS // Transferts de stock entre sites (requiert STOCK_MANAGEMENT)
+}
+
+// =============================================================================
+// SITES (ateliers / usines)
+// =============================================================================
+
+model Site {
+  id        String   @id @default(cuid())
+  tenantId  String   // clé de partition RLS
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  address   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  machines          Machine[]
+  userSites         UserSite[]
+  stockItems        StockItem[]
+  interventions     Intervention[]
+  transfersFrom     StockTransferRequest[] @relation("TransferFromSite")
+  transfersTo       StockTransferRequest[] @relation("TransferToSite")
+
+  @@index([tenantId])
+  @@map("sites")
+}
+
+// =============================================================================
+// UTILISATEURS
+// =============================================================================
+
+// Rôle personnalisé par tenant — plus flexible que l'enum UserRole
+model TenantRole {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String   // ex : "Patron", "Laboratorien"
+  permissions String[] // liste d'actions autorisées
+  isSystem    Boolean  @default(false) // true = non supprimable
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenantUsers TenantUser[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("tenant_roles")
+}
+
+// Lien entre un utilisateur Better Auth et un tenant avec son rôle
+model TenantUser {
+  id           String      @id @default(cuid())
+  tenantId     String
+  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  authUserId   String      @unique // ID utilisateur Better Auth
+  role         UserRole    // rôle système de base
+  tenantRoleId String?     // rôle custom optionnel (prioritaire pour les permissions)
+  tenantRole   TenantRole? @relation(fields: [tenantRoleId], references: [id])
+  jobTitle     String?     // poste / fonction (ex: "Technicien hydraulique")
+  managerId    String?     // ID du supérieur hiérarchique (authUserId Better Auth)
+  isActive     Boolean     @default(true)
+  joinedAt     DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  userSites UserSite[]
+
+  @@index([tenantId])
+  @@map("tenant_users")
+}
+
+// Assignation d'un utilisateur à un ou plusieurs sites
+model UserSite {
+  id           String     @id @default(cuid())
+  tenantId     String     // clé de partition RLS
+  tenantUserId String
+  tenantUser   TenantUser @relation(fields: [tenantUserId], references: [id], onDelete: Cascade)
+  siteId       String
+  site         Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  assignedAt   DateTime   @default(now())
+
+  @@unique([tenantUserId, siteId])
+  @@index([tenantId])
+  @@map("user_sites")
+}
+
+enum UserRole {
+  super_admin      // prestataire SaaS — accès total
+  client_admin     // responsable IT ou DT de la PME
+  workshop_manager // chef d'atelier — voit ses sites
+  technician       // technicien terrain — interface épurée
+  reader           // direction — lecture seule
+}
+
+// =============================================================================
+// MACHINES / ÉQUIPEMENTS
+// =============================================================================
+
+model Machine {
+  id           String        @id @default(cuid())
+  tenantId     String        // clé de partition RLS
+  siteId       String
+  site         Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  name         String
+  serialNumber String?
+  category     String?       // ex : "Presse hydraulique", "Concasseur"
+  manufacturer String?
+  model        String?
+  status       MachineStatus @default(OPERATIONAL)
+  qrCodeSlug   String        @unique @default(cuid()) // pour scan QR terrain
+  installedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  interventions Intervention[]
+  stockItems    StockItem[]
+
+  @@index([tenantId, siteId])
+  @@map("machines")
+}
+
+enum MachineStatus {
+  OPERATIONAL       // en service
+  UNDER_MAINTENANCE // en cours de maintenance
+  DECOMMISSIONED    // hors service / déclassé
+}
+
+// =============================================================================
+// INTERVENTIONS (noyau GMAO)
+// =============================================================================
+
+model Intervention {
+  id             String               @id @default(cuid())
+  tenantId       String               // clé de partition RLS
+  siteId         String
+  site           Site                 @relation(fields: [siteId], references: [id])
+  machineId      String?
+  machine        Machine?             @relation(fields: [machineId], references: [id])
+  assignedUserId String?              // technicien assigné (authUserId Better Auth)
+  title          String
+  description    String?
+  type           InterventionType
+  priority       InterventionPriority @default(MEDIUM)
+  status         InterventionStatus   @default(OPEN)
+  scheduledAt    DateTime?            // pour les interventions préventives planifiées
+  startedAt      DateTime?
+  closedAt       DateTime?
+  // Clôture enrichie
+  actualDurationMinutes Int?           // durée réelle en minutes (saisie à la clôture)
+  closingDiagnosis      String?        // diagnostic / cause racine (saisie à la clôture)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  // Récurrence (uniquement pour PREVENTIVE)
+  recurrenceType         RecurrenceType? // null = pas de récurrence
+  recurrenceIntervalDays Int?            // si CUSTOM : nb de jours entre chaque occurrence
+  recurrenceEndsAt       DateTime?       // date de fin de la série (ne pas générer d'occurrence après)
+  parentInterventionId   String?         // ID de l'intervention parente (pour traçabilité)
+
+  notes          InterventionNote[]
+  partsUsed      InterventionPartUsed[]
+  plannedMaterials InterventionPlannedMaterial[]
+
+  @@index([tenantId, siteId])
+  @@index([tenantId, assignedUserId])
+  @@index([tenantId, status])
+  @@map("interventions")
+}
+
+// Pièces/outils prévus pour une intervention (saisis à la création, suggérés à l'exécution)
+model InterventionPlannedMaterial {
+  id             String       @id @default(cuid())
+  tenantId       String       // clé de partition RLS
+  interventionId String
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  stockItemId    String
+  stockItem      StockItem    @relation(fields: [stockItemId], references: [id])
+  quantityPlanned Int         @default(1)
+  note           String?      // outil, commentaire (ex: "clé à choc 19mm")
+  createdAt      DateTime     @default(now())
+
+  @@unique([interventionId, stockItemId])
+  @@index([tenantId])
+  @@map("intervention_planned_materials")
+}
+
+enum RecurrenceType {
+  WEEKLY       // toutes les semaines (7 jours)
+  BIWEEKLY     // toutes les 2 semaines (14 jours)
+  MONTHLY      // tous les mois (30 jours)
+  QUARTERLY    // tous les trimestres (90 jours)
+  SEMIANNUAL   // tous les 6 mois (180 jours)
+  ANNUAL       // tous les ans (365 jours)
+  CUSTOM       // intervalle personnalisé en jours
+}
+
+enum InterventionType {
+  PREVENTIVE  // maintenance planifiée
+  CORRECTIVE  // panne / dépannage
+  PREDICTIVE  // basé sur des indicateurs
+  INSPECTION  // visite / contrôle
+}
+
+enum InterventionPriority {
+  LOW      // basse
+  MEDIUM   // normale
+  HIGH     // urgente
+  CRITICAL // arrêt de production
+}
+
+enum InterventionStatus {
+  OPEN           // créée, non assignée
+  IN_PROGRESS    // en cours
+  PENDING_PARTS  // en attente de pièces
+  CLOSED         // terminée
+  CANCELLED      // annulée
+}
+
+// Notes / commentaires d'une intervention (l'IA peut aider à rédiger)
+model InterventionNote {
+  id             String       @id @default(cuid())
+  tenantId       String       // clé de partition RLS
+  interventionId String
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  authorUserId   String       // authUserId Better Auth
+  content        String
+  createdAt      DateTime     @default(now())
+
+  @@index([tenantId])
+  @@map("intervention_notes")
+}
+
+// =============================================================================
+// STOCK / PIÈCES DÉTACHÉES (module STOCK_MANAGEMENT)
+// =============================================================================
+
+model StockItem {
+  id             String   @id @default(cuid())
+  tenantId       String   // clé de partition RLS
+  siteId         String
+  site           Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  machineId      String?  // machine associée (optionnel — pour la vue arborescente)
+  machine        Machine? @relation(fields: [machineId], references: [id], onDelete: SetNull)
+  reference      String   // référence article
+  name           String
+  unit           String   @default("pièce") // pièce, litre, kg, mètre...
+  quantityOnHand Int      @default(0)
+  minimumLevel   Int      @default(0)        // seuil d'alerte de rupture
+  unitCostCents  Int      @default(0)        // coût unitaire en centimes (évite les flottants)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  movements         StockMovement[]
+  partsUsed         InterventionPartUsed[]
+  plannedMaterials  InterventionPlannedMaterial[]
+  transferRequests  StockTransferRequest[]
+
+  @@unique([tenantId, siteId, reference]) // référence unique par site
+  @@index([tenantId, siteId])
+  @@map("stock_items")
+}
+
+// Mouvement de stock (entrée, sortie, transfert, ajustement)
+model StockMovement {
+  id          String       @id @default(cuid())
+  tenantId    String       // clé de partition RLS
+  stockItemId String
+  stockItem   StockItem    @relation(fields: [stockItemId], references: [id])
+  type        MovementType
+  quantity    Int          // positif = entrée, négatif = sortie
+  reason      String?
+  operatorId  String       // authUserId Better Auth
+  createdAt   DateTime     @default(now())
+
+  @@index([tenantId, stockItemId])
+  @@map("stock_movements")
+}
+
+enum MovementType {
+  IN            // réception commande
+  OUT           // sortie consommation manuelle
+  TRANSFER_IN   // réception transfert inter-site
+  TRANSFER_OUT  // envoi transfert inter-site
+  ADJUSTMENT    // correction d'inventaire
+}
+
+// Lien entre intervention et pièces consommées
+model InterventionPartUsed {
+  id             String       @id @default(cuid())
+  tenantId       String       // clé de partition RLS
+  interventionId String
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  stockItemId    String
+  stockItem      StockItem    @relation(fields: [stockItemId], references: [id])
+  quantity       Int
+  usedAt         DateTime     @default(now())
+
+  @@index([tenantId])
+  @@map("intervention_parts_used")
+}
+
+// Demande de transfert de stock entre sites (module INTER_SITE_TRANSFERS)
+model StockTransferRequest {
+  id            String         @id @default(cuid())
+  tenantId      String         // clé de partition RLS
+  fromSiteId    String
+  fromSite      Site           @relation("TransferFromSite", fields: [fromSiteId], references: [id])
+  toSiteId      String
+  toSite        Site           @relation("TransferToSite", fields: [toSiteId], references: [id])
+  stockItemId   String
+  stockItem     StockItem      @relation(fields: [stockItemId], references: [id])
+  quantity      Int
+  status        TransferStatus @default(PENDING)
+  requestedById String         // authUserId Better Auth
+  approvedById  String?        // authUserId Better Auth
+  reason        String?
+  createdAt     DateTime       @default(now())
+  resolvedAt    DateTime?
+
+  @@index([tenantId])
+  @@index([tenantId, fromSiteId])
+  @@map("stock_transfer_requests")
+}
+
+enum TransferStatus {
+  PENDING   // en attente de validation
+  APPROVED  // approuvé, en attente d'exécution
+  REJECTED  // refusé
+  COMPLETED // exécuté
+}
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  tenantId  String
+  userId    String           // destinataire (authUserId Better Auth)
+  type      NotificationType
+  title     String
+  body      String
+  link      String?          // URL de redirection au clic
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([tenantId, userId])
+  @@index([tenantId, userId, readAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  INTERVENTION_ASSIGNED  // technicien assigné à une intervention
+  INTERVENTION_OVERDUE   // intervention en retard (scheduledAt dépassé)
+  STOCK_LOW              // article de stock sous le seuil minimum
+  PREVENTIVE_DUE         // préventive planifiée dans moins de 2 jours
+  TRANSFER_PENDING       // transfert inter-site en attente d'approbation
+  TRANSFER_RESOLVED      // transfert approuvé ou rejeté
+}
+
+// =============================================================================
+// AUDIT TRAIL
+// =============================================================================
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  tenantId     String
+  userId       String   // authUserId Better Auth de l'acteur
+  action       String   // ex: "intervention.created", "machine.archived"
+  entityType   String   // ex: "intervention", "machine", "stock_item"
+  entityId     String
+  entityLabel  String   // libellé lisible (titre, nom...)
+  changes      Json?    // diff {before, after} si pertinent
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, userId])
+  @@map("audit_logs")
+}
