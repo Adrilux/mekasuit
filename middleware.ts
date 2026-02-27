@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth/better-auth-server-config"
 
+export const runtime = "nodejs"
+
 // Middleware Next.js — première ligne de défense
 // Gère : session, protection des routes, injection du tenantId dans les headers
 
