@@ -357,6 +357,39 @@ model InterventionTimeEntry {
 }
 
 // =============================================================================
+// MODÈLES D'INTERVENTION
+// =============================================================================
+
+model InterventionTemplate {
+  id          String               @id @default(cuid())
+  tenantId    String
+  name        String               // ex: "Vidange moteur", "Inspection semestrielle"
+  description String?
+  type        InterventionType     @default(PREVENTIVE)
+  priority    InterventionPriority @default(MEDIUM)
+  // Checklist pré-définie pour ce modèle
+  checklistItems InterventionTemplateChecklistItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("intervention_templates")
+}
+
+model InterventionTemplateChecklistItem {
+  id         String               @id @default(cuid())
+  tenantId   String
+  templateId String
+  template   InterventionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  label      String
+  isRequired Boolean              @default(false)
+  position   Int                  @default(0)
+
+  @@index([tenantId, templateId])
+  @@map("intervention_template_checklist_items")
+}
+
+// =============================================================================
 // CHECKLISTS
 // =============================================================================
 

@@ -11,9 +11,10 @@ import { actionCreateIntervention } from "@/server/actions/interventions/action-
 import { actionUpdateIntervention } from "@/server/actions/interventions/action-update-intervention"
 import { actionGenerateInterventionDescription } from "@/server/actions/ai/action-generate-intervention-description"
 import { toast } from "sonner"
-import { Sparkles } from "lucide-react"
+import { Sparkles, FileText } from "lucide-react"
 import type { SiteListItem } from "@/server/queries/sites/query-get-sites-by-tenant"
 import type { InterventionType, InterventionPriority, RecurrenceType } from "@prisma/client"
+import type { InterventionTemplate } from "@/server/queries/intervention-templates/query-get-intervention-templates"
 
 const TYPE_OPTIONS: { value: InterventionType; label: string }[] = [
   { value: "CORRECTIVE", label: "Corrective (panne)" },
@@ -46,6 +47,7 @@ type InterventionFormProps = {
   defaultMachineId?: string
   defaultType?: InterventionType
   aiEnabled?: boolean
+  templates?: InterventionTemplate[]
   // Si intervention est fourni, c'est un formulaire d'édition
   intervention?: {
     id: string
@@ -62,7 +64,7 @@ type InterventionFormProps = {
   }
 }
 
-export function InterventionForm({ sites, defaultSiteId, defaultMachineId, defaultType, intervention, aiEnabled = false }: InterventionFormProps) {
+export function InterventionForm({ sites, defaultSiteId, defaultMachineId, defaultType, intervention, aiEnabled = false, templates = [] }: InterventionFormProps) {
   const router = useRouter()
   const isEdit = !!intervention
   const [loading, setLoading] = useState(false)
@@ -73,6 +75,16 @@ export function InterventionForm({ sites, defaultSiteId, defaultMachineId, defau
   const [description, setDescription] = useState(intervention?.description ?? "")
   const [titleValue, setTitleValue] = useState(intervention?.title ?? "")
   const [aiLoading, setAiLoading] = useState(false)
+  const [selectedPriority, setSelectedPriority] = useState<InterventionPriority>(intervention?.priority ?? "MEDIUM")
+
+  function applyTemplate(templateId: string) {
+    const tpl = templates.find((t) => t.id === templateId)
+    if (!tpl) return
+    if (!titleValue) setTitleValue(tpl.name)
+    if (!description && tpl.description) setDescription(tpl.description)
+    setSelectedType(tpl.type as InterventionType)
+    setSelectedPriority(tpl.priority as InterventionPriority)
+  }
 
   const isPreventive = selectedType === "PREVENTIVE"
   const isCustomRecurrence = selectedRecurrence === "CUSTOM"
@@ -137,6 +149,29 @@ export function InterventionForm({ sites, defaultSiteId, defaultMachineId, defau
 
   return (
     <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+      {/* Sélecteur de modèle — création uniquement */}
+      {!isEdit && templates.length > 0 && (
+        <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText className="w-4 h-4 text-indigo-500" />
+            <span className="text-sm font-medium text-indigo-700">Depuis un modèle (optionnel)</span>
+          </div>
+          <select
+            className="w-full h-9 rounded-md border border-indigo-200 bg-white px-2 text-sm"
+            defaultValue=""
+            onChange={(e) => { if (e.target.value) applyTemplate(e.target.value) }}
+          >
+            <option value="">— Choisir un modèle</option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} ({t.type === "PREVENTIVE" ? "Préventive" : t.type === "CORRECTIVE" ? "Corrective" : t.type === "INSPECTION" ? "Inspection" : "Prédictive"})
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-indigo-500 mt-1">Pré-remplit le titre, la description, le type et la priorité.</p>
+        </div>
+      )}
+
       <div>
         <Label htmlFor="siteId">Site *</Label>
         {isEdit ? (
@@ -223,7 +258,7 @@ export function InterventionForm({ sites, defaultSiteId, defaultMachineId, defau
 
         <div>
           <Label htmlFor="priority">Priorité *</Label>
-          <Select name="priority" defaultValue={intervention?.priority ?? "MEDIUM"} required>
+          <Select name="priority" value={selectedPriority} onValueChange={(v) => setSelectedPriority(v as InterventionPriority)} required>
             <SelectTrigger id="priority" className="mt-1">
               <SelectValue />
             </SelectTrigger>

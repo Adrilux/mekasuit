@@ -50,7 +50,7 @@ Planifier la maintenance préventive.
 | ✅ Matériaux prévus | Liste de pièces planifiées pour une préventive. ⚠️ Dépend du module Stock — masqué si Stock inactif | Ajouter, modifier, supprimer, consommer tout en masse |
 | ✅ Chaîne de récurrence | Vue de toutes les occurrences passées et futures d'une même préventive | Lecture |
 | 🔲 Planning visuel | Calendrier semaine/mois des interventions. Vue par technicien ou par machine. Drag & drop pour replanifier | Voir calendrier, changer vue, glisser-déposer pour replanifier |
-| 🔲 Modèles d'intervention | Créer un modèle réutilisable (titre, description, checklist, matériaux standards) pour les préventives récurrentes | Créer modèle, modifier, supprimer, utiliser à la création |
+| ✅ Modèles d'intervention | Créer un modèle réutilisable (nom, description, type, priorité, checklist). Pré-remplit le formulaire à la création. Géré dans /settings/templates | Créer modèle, modifier, supprimer, utiliser à la création |
 | 🔲 Déclenchement par compteur | Quand un compteur machine atteint un seuil → créer automatiquement une préventive | Configurer seuil, lier à modèle d'intervention |
 
 ---

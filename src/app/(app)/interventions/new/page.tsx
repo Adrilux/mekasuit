@@ -1,11 +1,11 @@
 import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { assertCan } from "@/lib/permissions/permission-checker-server"
 import { queryGetSitesByTenant } from "@/server/queries/sites/query-get-sites-by-tenant"
+import { queryGetInterventionTemplates } from "@/server/queries/intervention-templates/query-get-intervention-templates"
 import { isModuleActive } from "@/lib/modules/module-access-checker"
 import { ModuleName } from "@prisma/client"
 import { InterventionForm } from "@/components/interventions/intervention-form"
 
-// Le machineId, siteId et type peuvent être pré-remplis depuis l'URL
 export default async function NewInterventionPage({
   searchParams,
 }: {
@@ -15,9 +15,10 @@ export default async function NewInterventionPage({
   const session = await requireSession()
   assertCan(session.role, "intervention:create")
 
-  const [sites, aiEnabled] = await Promise.all([
+  const [sites, aiEnabled, templates] = await Promise.all([
     queryGetSitesByTenant(session),
     isModuleActive(session.tenantId, ModuleName.AI_ASSISTANT),
+    queryGetInterventionTemplates(session),
   ])
 
   return (
@@ -29,6 +30,7 @@ export default async function NewInterventionPage({
         defaultMachineId={machineId}
         defaultType={type as "PREVENTIVE" | "CORRECTIVE" | undefined}
         aiEnabled={aiEnabled}
+        templates={templates}
       />
     </div>
   )
