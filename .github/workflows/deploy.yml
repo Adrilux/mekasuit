@@ -19,7 +19,7 @@ jobs:
             cd ${{ secrets.VPS_APP_DIR }}
             git pull origin master
             npm install --frozen-lockfile
-            DATABASE_URL=$(grep DATABASE_URL_UNPOOLED .env.local | cut -d '=' -f2-) npx prisma migrate deploy
+            npx prisma migrate deploy
             npm run build
             cp -r .next/static .next/standalone/.next/static
             cp -r public .next/standalone/public
