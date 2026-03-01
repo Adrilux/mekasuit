@@ -6,6 +6,7 @@ type Filter = {
   siteId: string
   search?: string
   status?: string
+  category?: string
 }
 
 export async function queryGetMachinesBySite(session: SessionUser, filterOrSiteId: string | Filter) {
@@ -15,6 +16,7 @@ export async function queryGetMachinesBySite(session: SessionUser, filterOrSiteI
       where: {
         siteId: filter.siteId,
         ...(filter.status ? { status: filter.status as never } : {}),
+        ...(filter.category ? { category: filter.category } : {}),
         ...(filter.search
           ? { name: { contains: filter.search, mode: "insensitive" } }
           : {}),

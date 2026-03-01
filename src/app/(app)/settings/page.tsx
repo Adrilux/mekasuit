@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { assertCan } from "@/lib/permissions/permission-checker-server"
-import { Shield, Package2, CreditCard, Settings, Settings2, ClipboardList } from "lucide-react"
+import { Shield, Package2, CreditCard, Settings, Settings2, ClipboardList, CheckSquare } from "lucide-react"
 
 const SETTINGS_SECTIONS = [
   {
@@ -38,6 +38,13 @@ const SETTINGS_SECTIONS = [
     title: "Journal d'audit",
     description: "Historique des actions réalisées dans votre espace",
     color: "bg-amber-50 text-amber-600",
+  },
+  {
+    href: "/settings/checklists",
+    icon: CheckSquare,
+    title: "Modèles de checklists",
+    description: "Créez des modèles de points de contrôle réutilisables",
+    color: "bg-teal-50 text-teal-600",
   },
 ]
 

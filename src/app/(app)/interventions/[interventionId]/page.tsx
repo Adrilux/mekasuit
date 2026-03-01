@@ -16,6 +16,10 @@ import { InterventionNoteForm } from "@/components/interventions/intervention-no
 import { InterventionPartsPanel } from "@/components/interventions/intervention-parts-panel"
 import { InterventionPlannedMaterialsPanel } from "@/components/interventions/intervention-planned-materials-panel"
 import { queryGetRecurrenceChain } from "@/server/queries/interventions/query-get-recurrence-chain"
+import { queryGetChecklistTemplates } from "@/server/queries/checklists/query-get-checklist-templates"
+import { InterventionAttachments } from "@/components/interventions/intervention-attachments"
+import { InterventionTimeTracking } from "@/components/interventions/intervention-time-tracking"
+import { InterventionChecklists } from "@/components/interventions/intervention-checklists"
 import { can } from "@/lib/permissions/permission-matrix"
 
 const TYPE_LABELS: Record<string, string> = {
@@ -59,10 +63,11 @@ export default async function InterventionDetailPage({
     ? await queryGetStockItemsBySite(session, intervention.siteId)
     : []
 
-  // Résolution du nom du technicien assigné (Better Auth user table)
+  // Résolution des noms (technicien assigné + auteurs notes + techniciens time entries)
   const authUserIds = [
     intervention.assignedUserId,
     ...intervention.notes.map((n) => n.authorUserId),
+    ...intervention.timeEntries.map((e) => e.userId),
   ].filter((id): id is string => !!id)
   const userNameMap = await buildUserNameMap([...new Set(authUserIds)])
 
@@ -70,6 +75,9 @@ export default async function InterventionDetailPage({
   const recurrenceChain = intervention.type === "PREVENTIVE" && intervention.recurrenceType
     ? await queryGetRecurrenceChain(session, interventionId)
     : []
+
+  // Modèles de checklists disponibles
+  const checklistTemplates = await queryGetChecklistTemplates(session)
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -253,6 +261,30 @@ export default async function InterventionDetailPage({
           isPreventive={intervention.type === "PREVENTIVE"}
         />
       )}
+
+      {/* Pièces jointes */}
+      <InterventionAttachments
+        interventionId={intervention.id}
+        attachments={intervention.attachments}
+        canEdit={canEdit}
+      />
+
+      {/* Pointage heures */}
+      <InterventionTimeTracking
+        interventionId={intervention.id}
+        entries={intervention.timeEntries}
+        currentUserId={session.id}
+        userNameMap={userNameMap}
+        canEdit={canEdit}
+      />
+
+      {/* Checklists */}
+      <InterventionChecklists
+        interventionId={intervention.id}
+        checklists={intervention.checklists}
+        templates={checklistTemplates}
+        canEdit={canEdit}
+      />
 
       {/* Notes / journal */}
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">

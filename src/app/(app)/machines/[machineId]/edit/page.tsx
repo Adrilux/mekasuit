@@ -37,6 +37,7 @@ export default async function EditMachinePage({ params }: { params: Promise<{ ma
           manufacturer: machine.manufacturer,
           model: machine.model,
           installedAt: machine.installedAt,
+          notes: machine.notes,
         }}
       />
     </div>

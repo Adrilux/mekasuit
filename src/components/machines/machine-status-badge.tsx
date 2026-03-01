@@ -4,7 +4,7 @@ import type { MachineStatus } from "@prisma/client"
 const STATUS_CONFIG: Record<MachineStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   OPERATIONAL: { label: "Opérationnelle", variant: "default" },
   UNDER_MAINTENANCE: { label: "En maintenance", variant: "secondary" },
-  DECOMMISSIONED: { label: "Archivée", variant: "outline" },
+  DECOMMISSIONED: { label: "Hors service", variant: "outline" },
 }
 
 export function MachineStatusBadge({ status }: { status: MachineStatus }) {

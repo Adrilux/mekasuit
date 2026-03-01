@@ -9,11 +9,14 @@ const STATUS_OPTIONS = [
   { value: "", label: "Tous les statuts" },
   { value: "OPERATIONAL", label: "Opérationnelle" },
   { value: "UNDER_MAINTENANCE", label: "En maintenance" },
-  { value: "OUT_OF_SERVICE", label: "Hors service" },
-  { value: "DECOMMISSIONED", label: "Déclassée" },
+  { value: "DECOMMISSIONED", label: "Hors service" },
 ]
 
-export function MachineFilters() {
+type MachineFiltersProps = {
+  categories?: string[]
+}
+
+export function MachineFilters({ categories = [] }: MachineFiltersProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -33,12 +36,14 @@ export function MachineFilters() {
 
   const search = searchParams.get("search") ?? ""
   const status = searchParams.get("status") ?? ""
-  const hasFilters = search || status
+  const category = searchParams.get("category") ?? ""
+  const hasFilters = search || status || category
 
   function clearAll() {
     const params = new URLSearchParams(searchParams.toString())
     params.delete("search")
     params.delete("status")
+    params.delete("category")
     router.push(`${pathname}?${params.toString()}`)
   }
 
@@ -67,6 +72,19 @@ export function MachineFilters() {
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
+
+      {categories.length > 0 && (
+        <select
+          className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={category}
+          onChange={(e) => update("category", e.target.value)}
+        >
+          <option value="">Toutes les catégories</option>
+          {categories.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+      )}
 
       {hasFilters && (
         <button

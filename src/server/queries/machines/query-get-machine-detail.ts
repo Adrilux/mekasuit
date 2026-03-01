@@ -33,6 +33,17 @@ export async function queryGetMachineDetail(session: SessionUser, machineId: str
             minimumLevel: true,
           },
         },
+        attachments: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            fileName: true,
+            storedName: true,
+            mimeType: true,
+            sizeBytes: true,
+            createdAt: true,
+          },
+        },
       },
     })
   })

@@ -16,6 +16,7 @@ const schema = z.object({
   manufacturer: z.string().max(100).optional(),
   model: z.string().max(100).optional(),
   installedAt: z.string().optional(),
+  notes: z.string().max(2000).optional(),
 })
 
 export async function actionUpdateMachine(input: unknown) {
@@ -44,6 +45,7 @@ export async function actionUpdateMachine(input: unknown) {
           manufacturer: data.manufacturer || null,
           model: data.model || null,
           installedAt: data.installedAt ? new Date(data.installedAt) : null,
+          notes: data.notes !== undefined ? (data.notes || null) : undefined,
         },
       })
     })

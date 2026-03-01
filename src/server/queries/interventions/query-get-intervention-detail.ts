@@ -21,6 +21,34 @@ export async function queryGetInterventionDetail(session: SessionUser, intervent
             stockItem: { select: { id: true, name: true, reference: true, unit: true, quantityOnHand: true } },
           },
         },
+        attachments: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            fileName: true,
+            storedName: true,
+            mimeType: true,
+            sizeBytes: true,
+            createdAt: true,
+          },
+        },
+        timeEntries: {
+          orderBy: { startedAt: "desc" },
+          select: {
+            id: true,
+            userId: true,
+            startedAt: true,
+            endedAt: true,
+            durationMinutes: true,
+            note: true,
+          },
+        },
+        checklists: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            items: { orderBy: { position: "asc" } },
+          },
+        },
       },
     })
   })

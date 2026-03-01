@@ -6,8 +6,7 @@ import { buildCsv, csvResponse } from "@/lib/csv/csv-builder"
 const STATUS_LABELS: Record<string, string> = {
   OPERATIONAL: "Opérationnelle",
   UNDER_MAINTENANCE: "En maintenance",
-  OUT_OF_SERVICE: "Hors service",
-  DECOMMISSIONED: "Déclassée",
+  DECOMMISSIONED: "Hors service",
 }
 
 export async function GET(req: NextRequest) {

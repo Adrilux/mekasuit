@@ -86,6 +86,56 @@ ALTER TABLE tenant_roles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation_tenant_roles ON tenant_roles
   USING ("tenantId" = current_setting('app.current_tenant_id', true));
 
+-- Machine attachments
+ALTER TABLE machine_attachments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_machine_attachments ON machine_attachments
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
+-- Machine counters
+ALTER TABLE machine_counters ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_machine_counters ON machine_counters
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
+-- Machine counter readings
+ALTER TABLE machine_counter_readings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_machine_counter_readings ON machine_counter_readings
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
+-- Machine components (BOM)
+ALTER TABLE machine_components ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_machine_components ON machine_components
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
+-- Intervention attachments
+ALTER TABLE intervention_attachments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_intervention_attachments ON intervention_attachments
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
+-- Intervention time entries
+ALTER TABLE intervention_time_entries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_intervention_time_entries ON intervention_time_entries
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
+-- Checklist templates
+ALTER TABLE checklist_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_checklist_templates ON checklist_templates
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
+-- Checklist template items
+ALTER TABLE checklist_template_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_checklist_template_items ON checklist_template_items
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
+-- Intervention checklists
+ALTER TABLE intervention_checklists ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_intervention_checklists ON intervention_checklists
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
+-- Intervention checklist items
+ALTER TABLE intervention_checklist_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_intervention_checklist_items ON intervention_checklist_items
+  USING ("tenantId" = current_setting('app.current_tenant_id', true));
+
 -- =============================================================================
 -- Note : le rôle DB de l'application doit avoir FORCE ROW LEVEL SECURITY
 -- pour que les politiques s'appliquent même aux superusers applicatifs

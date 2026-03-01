@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { actionCreateMachine } from "@/server/actions/machines/action-create-machine"
 import { actionUpdateMachine } from "@/server/actions/machines/action-update-machine"
 import { toast } from "sonner"
@@ -23,6 +24,7 @@ type MachineFormProps = {
     manufacturer: string | null
     model: string | null
     installedAt: Date | null
+    notes: string | null
   }
 }
 
@@ -45,6 +47,7 @@ export function MachineForm({ sites, machine }: MachineFormProps) {
       manufacturer: form.get("manufacturer") as string || undefined,
       model: form.get("model") as string || undefined,
       installedAt: form.get("installedAt") as string || undefined,
+      notes: form.get("notes") as string || undefined,
     }
 
     const result = isEdit
@@ -119,6 +122,19 @@ export function MachineForm({ sites, machine }: MachineFormProps) {
           type="date"
           defaultValue={machine?.installedAt ? machine.installedAt.toISOString().split("T")[0] : ""}
           className="mt-1"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="notes">Notes / Description</Label>
+        <Textarea
+          id="notes"
+          name="notes"
+          maxLength={2000}
+          defaultValue={machine?.notes ?? ""}
+          className="mt-1 resize-none"
+          rows={3}
+          placeholder="Informations complémentaires, localisation, particularités techniques…"
         />
       </div>
 

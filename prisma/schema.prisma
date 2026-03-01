@@ -237,20 +237,207 @@ model Machine {
   status       MachineStatus @default(OPERATIONAL)
   qrCodeSlug   String        @unique @default(cuid()) // pour scan QR terrain
   installedAt  DateTime?
+  notes        String?       // Description / notes libres sur la machine
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   interventions Intervention[]
   stockItems    StockItem[]
+  attachments   MachineAttachment[]
+  counters      MachineCounter[]
+  components    MachineComponent[]
 
   @@index([tenantId, siteId])
   @@map("machines")
+}
+
+model MachineAttachment {
+  id          String   @id @default(cuid())
+  tenantId    String
+  machineId   String
+  machine     Machine  @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  fileName    String   // nom original du fichier
+  storedName  String   // nom sur le disque (uuid + extension)
+  mimeType    String
+  sizeBytes   Int
+  uploadedBy  String   // authUserId Better Auth
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, machineId])
+  @@map("machine_attachments")
 }
 
 enum MachineStatus {
   OPERATIONAL       // en service
   UNDER_MAINTENANCE // en cours de maintenance
   DECOMMISSIONED    // hors service / déclassé
+}
+
+// =============================================================================
+// COMPTEURS MACHINE
+// =============================================================================
+
+model MachineCounter {
+  id          String   @id @default(cuid())
+  tenantId    String
+  machineId   String
+  machine     Machine  @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  name        String   // ex: "Heures moteur", "Cycles presse", "Km parcourus"
+  unit        String   // ex: "h", "cycles", "km"
+  currentValue Float   @default(0) // valeur courante (calculée depuis le dernier relevé)
+  // Seuil déclencheur d'intervention préventive
+  thresholdValue     Float?  // valeur absolue de déclenchement (ex: 500 h)
+  thresholdInterval  Float?  // intervalle de répétition (ex: tous les 500 h)
+  // Modèle d'intervention à créer quand le seuil est atteint
+  triggerTitle       String?  // titre de l'intervention à créer
+  triggerDescription String?  // description
+  triggerPriority    String?  // priorité : LOW/MEDIUM/HIGH/CRITICAL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  readings    MachineCounterReading[]
+
+  @@index([tenantId, machineId])
+  @@map("machine_counters")
+}
+
+model MachineCounterReading {
+  id          String          @id @default(cuid())
+  tenantId    String
+  counterId   String
+  counter     MachineCounter  @relation(fields: [counterId], references: [id], onDelete: Cascade)
+  value       Float           // valeur absolue lue sur le compteur
+  recordedAt  DateTime        @default(now()) // date du relevé (modifiable)
+  recordedBy  String          // authUserId Better Auth
+  note        String?         // commentaire optionnel
+
+  @@index([tenantId, counterId])
+  @@map("machine_counter_readings")
+}
+
+// =============================================================================
+// PIÈCES JOINTES INTERVENTIONS
+// =============================================================================
+
+model InterventionAttachment {
+  id             String       @id @default(cuid())
+  tenantId       String
+  interventionId String
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  fileName       String
+  storedName     String
+  mimeType       String
+  sizeBytes      Int
+  uploadedBy     String       // authUserId Better Auth
+  createdAt      DateTime     @default(now())
+
+  @@index([tenantId, interventionId])
+  @@map("intervention_attachments")
+}
+
+// =============================================================================
+// POINTAGE HEURES
+// =============================================================================
+
+model InterventionTimeEntry {
+  id             String       @id @default(cuid())
+  tenantId       String
+  interventionId String
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  userId         String       // authUserId Better Auth
+  startedAt      DateTime
+  endedAt        DateTime?    // null = session en cours
+  durationMinutes Int?        // calculé à la clôture de la session
+  note           String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([tenantId, interventionId])
+  @@map("intervention_time_entries")
+}
+
+// =============================================================================
+// CHECKLISTS
+// =============================================================================
+
+model ChecklistTemplate {
+  id       String   @id @default(cuid())
+  tenantId String
+  name     String
+  items    ChecklistTemplateItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("checklist_templates")
+}
+
+model ChecklistTemplateItem {
+  id          String            @id @default(cuid())
+  tenantId    String
+  templateId  String
+  template    ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  label       String
+  isRequired  Boolean           @default(false)
+  position    Int               @default(0)
+
+  @@index([tenantId, templateId])
+  @@map("checklist_template_items")
+}
+
+model InterventionChecklist {
+  id             String       @id @default(cuid())
+  tenantId       String
+  interventionId String
+  intervention   Intervention @relation(fields: [interventionId], references: [id], onDelete: Cascade)
+  name           String
+  createdAt      DateTime     @default(now())
+  items          InterventionChecklistItem[]
+
+  @@index([tenantId, interventionId])
+  @@map("intervention_checklists")
+}
+
+model InterventionChecklistItem {
+  id          String                @id @default(cuid())
+  tenantId    String
+  checklistId String
+  checklist   InterventionChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  label       String
+  isRequired  Boolean               @default(false)
+  isChecked   Boolean               @default(false)
+  checkedAt   DateTime?
+  checkedBy   String?               // authUserId Better Auth
+  position    Int                   @default(0)
+
+  @@index([tenantId, checklistId])
+  @@map("intervention_checklist_items")
+}
+
+// =============================================================================
+// ARBORESCENCE COMPOSANTS / BOM (machine → sous-ensemble → pièce)
+// =============================================================================
+
+model MachineComponent {
+  id          String   @id @default(cuid())
+  tenantId    String
+  machineId   String
+  machine     Machine  @relation(fields: [machineId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      MachineComponent?  @relation("ComponentTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    MachineComponent[] @relation("ComponentTree")
+  name        String
+  description String?
+  quantity    Int      @default(1)
+  stockItemId String?
+  stockItem   StockItem? @relation(fields: [stockItemId], references: [id], onDelete: SetNull)
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, machineId])
+  @@index([parentId])
+  @@map("machine_components")
 }
 
 // =============================================================================
@@ -288,6 +475,9 @@ model Intervention {
   notes          InterventionNote[]
   partsUsed      InterventionPartUsed[]
   plannedMaterials InterventionPlannedMaterial[]
+  attachments    InterventionAttachment[]
+  timeEntries    InterventionTimeEntry[]
+  checklists     InterventionChecklist[]
 
   @@index([tenantId, siteId])
   @@index([tenantId, assignedUserId])
@@ -378,10 +568,11 @@ model StockItem {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  movements         StockMovement[]
-  partsUsed         InterventionPartUsed[]
-  plannedMaterials  InterventionPlannedMaterial[]
-  transferRequests  StockTransferRequest[]
+  movements           StockMovement[]
+  partsUsed           InterventionPartUsed[]
+  plannedMaterials    InterventionPlannedMaterial[]
+  transferRequests    StockTransferRequest[]
+  machineComponents   MachineComponent[]
 
   @@unique([tenantId, siteId, reference]) // référence unique par site
   @@index([tenantId, siteId])

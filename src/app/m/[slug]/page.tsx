@@ -22,8 +22,7 @@ export default async function MachineQrScanPage({
   const STATUS_LABELS: Record<string, string> = {
     OPERATIONAL: "Opérationnelle",
     UNDER_MAINTENANCE: "En maintenance",
-    OUT_OF_SERVICE: "Hors service",
-    DECOMMISSIONED: "Déclassée",
+    DECOMMISSIONED: "Hors service",
   }
 
   return (

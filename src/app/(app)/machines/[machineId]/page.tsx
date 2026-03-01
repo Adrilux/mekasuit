@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { headers } from "next/headers"
-import { Pencil, ClipboardList, Package, Activity, QrCode } from "lucide-react"
+import { Pencil, ClipboardList, Package, Activity, QrCode, History } from "lucide-react"
 import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { assertSiteAccess } from "@/lib/permissions/permission-checker-server"
 import { queryGetMachineDetail } from "@/server/queries/machines/query-get-machine-detail"
@@ -13,7 +13,15 @@ import { MachineStatusBadge } from "@/components/machines/machine-status-badge"
 import { InterventionStatusBadge } from "@/components/interventions/intervention-status-badge"
 import { InterventionPriorityBadge } from "@/components/interventions/intervention-priority-badge"
 import { MachineArchiveButton } from "@/components/machines/machine-archive-button"
+import { MachineRestoreButton } from "@/components/machines/machine-restore-button"
+import { MachineStatusButton } from "@/components/machines/machine-status-button"
 import { MachineQrCode } from "@/components/machines/machine-qr-code"
+import { MachineAttachments } from "@/components/machines/machine-attachments"
+import { MachineQrRegenerateButton } from "@/components/machines/machine-qr-regenerate-button"
+import { MachineCounters } from "@/components/machines/machine-counters"
+import { queryGetMachineCounters } from "@/server/queries/machines/query-get-machine-counters"
+import { MachineBom } from "@/components/machines/machine-bom"
+import { queryGetMachineBom } from "@/server/queries/machines/query-get-machine-bom"
 import { can } from "@/lib/permissions/permission-matrix"
 
 export default async function MachineDetailPage({ params }: { params: Promise<{ machineId: string }> }) {
@@ -28,7 +36,11 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
 
   assertSiteAccess(session.role, session.siteIds, machine.siteId)
 
-  const stats = await queryGetMachineStats(session, machineId)
+  const [stats, counters, bom] = await Promise.all([
+    queryGetMachineStats(session, machineId),
+    queryGetMachineCounters(session, machineId),
+    queryGetMachineBom(session, machineId),
+  ])
 
   const canEdit = can(session.role, "machine:update")
   const canArchive = can(session.role, "machine:archive")
@@ -40,6 +52,8 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
   const host = hdrs.get("host") ?? "localhost:3000"
   const proto = hdrs.get("x-forwarded-proto") ?? "http"
   const baseUrl = `${proto}://${host}`
+
+  const isDecommissioned = machine.status === "DECOMMISSIONED"
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -53,16 +67,22 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
           <p className="text-sm text-slate-500">{machine.site.name}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {canEdit && machine.status !== "DECOMMISSIONED" && (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/machines/${machine.id}/edit`}>
-                <Pencil className="w-4 h-4 mr-1" />
-                Modifier
-              </Link>
-            </Button>
+          {canEdit && !isDecommissioned && (
+            <>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/machines/${machine.id}/edit`}>
+                  <Pencil className="w-4 h-4 mr-1" />
+                  Modifier
+                </Link>
+              </Button>
+              <MachineStatusButton machineId={machine.id} currentStatus={machine.status} />
+            </>
           )}
-          {canArchive && machine.status !== "DECOMMISSIONED" && (
-            <MachineArchiveButton machineId={machine.id} machineName={machine.name} />
+          {canArchive && !isDecommissioned && (
+            <MachineArchiveButton machineId={machine.id} machineName={machine.name} showLabel />
+          )}
+          {canArchive && isDecommissioned && (
+            <MachineRestoreButton machineId={machine.id} machineName={machine.name} />
           )}
         </div>
       </div>
@@ -96,6 +116,12 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
             </dd>
           </div>
         </dl>
+        {machine.notes && (
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            <p className="text-xs text-slate-500 mb-1">Notes</p>
+            <p className="text-sm text-slate-700 whitespace-pre-wrap">{machine.notes}</p>
+          </div>
+        )}
       </div>
 
       {/* Stats machine */}
@@ -157,16 +183,31 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
+      {/* Timeline */}
+      <div className="flex justify-end">
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/machines/${machine.id}/timeline`}>
+            <History className="w-4 h-4 mr-1" />
+            Voir la timeline
+          </Link>
+        </Button>
+      </div>
+
       {/* QR Code */}
       <div className="bg-white border border-slate-200 rounded-lg p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-slate-700">QR Code terrain</h2>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/machines/${machine.id}/qr-code`}>
-              <QrCode className="w-4 h-4 mr-1" />
-              Plein écran
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {canEdit && !isDecommissioned && (
+              <MachineQrRegenerateButton machineId={machine.id} />
+            )}
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/machines/${machine.id}/qr-code`}>
+                <QrCode className="w-4 h-4 mr-1" />
+                Plein écran
+              </Link>
+            </Button>
+          </div>
         </div>
         <MachineQrCode slug={machine.qrCodeSlug} machineName={machine.name} baseUrl={baseUrl} />
       </div>
@@ -230,6 +271,29 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
       )}
+
+      {/* Pièces jointes */}
+      <MachineAttachments
+        machineId={machine.id}
+        attachments={machine.attachments}
+        canEdit={canEdit && !isDecommissioned}
+      />
+
+      {/* Compteurs machine */}
+      <MachineCounters
+        machineId={machine.id}
+        counters={counters}
+        canEdit={canEdit && !isDecommissioned}
+      />
+
+      {/* Arborescence composants (BOM) */}
+      <MachineBom
+        machineId={machine.id}
+        initialNodes={bom}
+        canEdit={canEdit && !isDecommissioned}
+        stockModuleActive={stockModuleActive}
+        availableStockItems={machine.stockItems}
+      />
 
       {/* Historique des interventions */}
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
