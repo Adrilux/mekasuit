@@ -143,12 +143,13 @@ model Site {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  machines          Machine[]
-  userSites         UserSite[]
-  stockItems        StockItem[]
-  interventions     Intervention[]
-  transfersFrom     StockTransferRequest[] @relation("TransferFromSite")
-  transfersTo       StockTransferRequest[] @relation("TransferToSite")
+  machines           Machine[]
+  userSites          UserSite[]
+  stockItems         StockItem[]
+  interventions      Intervention[]
+  transfersFrom      StockTransferRequest[]     @relation("TransferFromSite")
+  transfersTo        StockTransferRequest[]     @relation("TransferToSite")
+  inventorySessions  StockInventorySession[]
 
   @@index([tenantId])
   @@map("sites")
@@ -606,23 +607,59 @@ model StockItem {
   plannedMaterials    InterventionPlannedMaterial[]
   transferRequests    StockTransferRequest[]
   machineComponents   MachineComponent[]
+  supplierLinks       StockItemSupplier[]
+  inventoryItems      StockInventoryItem[]
 
   @@unique([tenantId, siteId, reference]) // référence unique par site
   @@index([tenantId, siteId])
   @@map("stock_items")
 }
 
+// Fournisseurs (tenant-scoped)
+model Supplier {
+  id       String @id @default(cuid())
+  tenantId String
+  name     String
+  email    String?
+  phone    String?
+
+  stockLinks StockItemSupplier[]
+
+  @@index([tenantId])
+  @@map("suppliers")
+}
+
+// Lien article ↔ fournisseur (avec ref fournisseur, prix achat, délai réappro)
+model StockItemSupplier {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  stockItemId        String
+  stockItem          StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+  supplierId         String
+  supplier           Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplierReference  String?   // référence de l'article chez le fournisseur
+  purchasePriceCents Int       @default(0) // prix d'achat en centimes
+  leadTimeDays       Int?      // délai de réapprovisionnement en jours
+
+  @@unique([stockItemId, supplierId])
+  @@index([tenantId, stockItemId])
+  @@map("stock_item_suppliers")
+}
+
 // Mouvement de stock (entrée, sortie, transfert, ajustement)
 model StockMovement {
-  id          String       @id @default(cuid())
-  tenantId    String       // clé de partition RLS
-  stockItemId String
-  stockItem   StockItem    @relation(fields: [stockItemId], references: [id])
-  type        MovementType
-  quantity    Int          // positif = entrée, négatif = sortie
-  reason      String?
-  operatorId  String       // authUserId Better Auth
-  createdAt   DateTime     @default(now())
+  id            String       @id @default(cuid())
+  tenantId      String       // clé de partition RLS
+  stockItemId   String
+  stockItem     StockItem    @relation(fields: [stockItemId], references: [id])
+  type          MovementType
+  quantity      Int          // positif = entrée, négatif = sortie
+  reason        String?
+  operatorId    String       // authUserId Better Auth
+  createdAt     DateTime     @default(now())
+  cancelledAt   DateTime?    // null = actif, sinon annulé
+  cancelledBy   String?      // userId qui a annulé
+  cancelReason  String?
 
   @@index([tenantId, stockItemId])
   @@map("stock_movements")
@@ -634,6 +671,48 @@ enum MovementType {
   TRANSFER_IN   // réception transfert inter-site
   TRANSFER_OUT  // envoi transfert inter-site
   ADJUSTMENT    // correction d'inventaire
+}
+
+// =============================================================================
+// INVENTAIRE PHYSIQUE
+// =============================================================================
+
+enum StockInventoryStatus {
+  OPEN    // en cours de comptage
+  CLOSED  // validé — ajustements générés
+}
+
+model StockInventorySession {
+  id        String               @id @default(cuid())
+  tenantId  String
+  siteId    String
+  site      Site                 @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  status    StockInventoryStatus @default(OPEN)
+  createdBy String               // userId Better Auth
+  closedAt  DateTime?
+  closedBy  String?
+  createdAt DateTime             @default(now())
+
+  items StockInventoryItem[]
+
+  @@index([tenantId, siteId])
+  @@map("stock_inventory_sessions")
+}
+
+model StockInventoryItem {
+  id              String                @id @default(cuid())
+  tenantId        String
+  sessionId       String
+  session         StockInventorySession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  stockItemId     String
+  stockItem       StockItem             @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+  systemQuantity  Int                   // snapshot à l'ouverture de la session
+  countedQuantity Int?                  // null = non encore compté
+  note            String?
+
+  @@unique([sessionId, stockItemId])
+  @@index([tenantId, sessionId])
+  @@map("stock_inventory_items")
 }
 
 // Lien entre intervention et pièces consommées

@@ -1,42 +1,25 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { Pencil, AlertTriangle, TrendingUp, TrendingDown, RotateCcw, ArrowLeftRight } from "lucide-react"
+import { headers } from "next/headers"
+import { Pencil, AlertTriangle } from "lucide-react"
 import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { assertSiteAccess } from "@/lib/permissions/permission-checker-server"
 import { assertModuleActive } from "@/lib/modules/module-access-checker"
 import { ModuleName } from "@prisma/client"
 import { queryGetStockItemDetail } from "@/server/queries/stock/query-get-stock-item-detail"
 import { queryGetMachinesBySite } from "@/server/queries/machines/query-get-machines-by-site"
+import { queryGetSuppliers } from "@/server/queries/stock/query-get-suppliers"
+import { queryGetStockItemSuppliers } from "@/server/queries/stock/query-get-stock-item-suppliers"
 import { buildUserNameMap } from "@/server/queries/users/query-get-users-by-auth-ids"
 import { Button } from "@/components/ui/button"
 import { StockMovementDialog } from "@/components/stock/stock-movement-dialog"
 import { StockDeleteButton } from "@/components/stock/stock-delete-button"
 import { StockMachineLinkPanel } from "@/components/stock/stock-machine-link-panel"
+import { StockSuppliersPanel } from "@/components/stock/stock-suppliers-panel"
+import { StockQrCode } from "@/components/stock/stock-qr-code"
+import { StockMovementHistory } from "@/components/stock/stock-movement-history"
 import { can } from "@/lib/permissions/permission-matrix"
 
-const MOVEMENT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  IN: TrendingUp,
-  OUT: TrendingDown,
-  ADJUSTMENT: RotateCcw,
-  TRANSFER_IN: ArrowLeftRight,
-  TRANSFER_OUT: ArrowLeftRight,
-}
-
-const MOVEMENT_LABELS: Record<string, string> = {
-  IN: "Entrée",
-  OUT: "Sortie",
-  ADJUSTMENT: "Ajustement",
-  TRANSFER_IN: "Transfert entrant",
-  TRANSFER_OUT: "Transfert sortant",
-}
-
-const MOVEMENT_COLORS: Record<string, string> = {
-  IN: "text-green-600",
-  OUT: "text-red-600",
-  ADJUSTMENT: "text-blue-600",
-  TRANSFER_IN: "text-green-600",
-  TRANSFER_OUT: "text-red-600",
-}
 
 export default async function StockItemDetailPage({
   params,
@@ -54,14 +37,25 @@ export default async function StockItemDetailPage({
 
   const canEdit = can(session.role, "stock:update")
   const canMove = can(session.role, "stock:movement")
+  const canCancelMovement = can(session.role, "stock:movement:cancel")
 
-  // Charger les machines du site pour l'association
-  const siteMachines = await queryGetMachinesBySite(session, item.siteId)
+  // Charger les machines, fournisseurs et opérateurs en parallèle
+  const [siteMachines, suppliers, itemSuppliers] = await Promise.all([
+    queryGetMachinesBySite(session, item.siteId),
+    queryGetSuppliers(session),
+    queryGetStockItemSuppliers(session, stockItemId),
+  ])
   const availableMachines = siteMachines.map((m) => ({ id: m.id, name: m.name }))
 
   // Résoudre les noms des opérateurs
   const operatorIds = [...new Set(item.movements.map((m) => m.operatorId))]
   const userNameMap = await buildUserNameMap(operatorIds)
+
+  // URL de base pour les QR codes
+  const headersList = await headers()
+  const host = headersList.get("host") ?? "localhost:3000"
+  const proto = headersList.get("x-forwarded-proto") ?? "http"
+  const baseUrl = `${proto}://${host}`
 
   const isLowStock = item.quantityOnHand <= item.minimumLevel && item.minimumLevel > 0
 
@@ -90,6 +84,12 @@ export default async function StockItemDetailPage({
               unit={item.unit}
             />
           )}
+          <StockQrCode
+            stockItemId={item.id}
+            reference={item.reference}
+            itemName={item.name}
+            baseUrl={baseUrl}
+          />
           {canEdit && (
             <Button asChild variant="outline" size="sm">
               <Link href={`/stock/${item.id}/edit`}>
@@ -139,59 +139,25 @@ export default async function StockItemDetailPage({
         canEdit={canEdit}
       />
 
+      {/* Fournisseurs */}
+      <StockSuppliersPanel
+        stockItemId={item.id}
+        initialLinks={itemSuppliers}
+        suppliers={suppliers}
+        canEdit={canEdit}
+      />
+
       {/* Historique des mouvements */}
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         <h2 className="text-sm font-semibold text-slate-700 px-5 py-4 border-b border-slate-200">
           Historique des mouvements ({item.movements.length})
         </h2>
-
-        {item.movements.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-slate-400 text-center">Aucun mouvement enregistré</p>
-        ) : (
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-4 py-2 font-medium text-slate-600">Type</th>
-                <th className="text-left px-4 py-2 font-medium text-slate-600">Quantité</th>
-                <th className="text-left px-4 py-2 font-medium text-slate-600">Motif</th>
-                <th className="text-left px-4 py-2 font-medium text-slate-600">Opérateur</th>
-                <th className="text-left px-4 py-2 font-medium text-slate-600">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {item.movements.map((m) => {
-                const Icon = MOVEMENT_ICONS[m.type] ?? RotateCcw
-                const color = MOVEMENT_COLORS[m.type] ?? "text-slate-600"
-                const isPositive = ["IN", "TRANSFER_IN", "ADJUSTMENT"].includes(m.type)
-                return (
-                  <tr key={m.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3">
-                      <div className={`flex items-center gap-1.5 ${color}`}>
-                        <Icon className="w-3.5 h-3.5" />
-                        <span className="font-medium">{MOVEMENT_LABELS[m.type] ?? m.type}</span>
-                      </div>
-                    </td>
-                    <td className={`px-4 py-3 font-semibold ${color}`}>
-                      {isPositive ? "+" : "-"}{m.quantity} {item.unit}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{m.reason ?? "—"}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {userNameMap.get(m.operatorId) ?? "Inconnu"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">
-                      {new Date(m.createdAt).toLocaleDateString("fr-FR", {
-                        day: "numeric", month: "short", year: "numeric",
-                        hour: "2-digit", minute: "2-digit",
-                      })}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-          </div>
-        )}
+        <StockMovementHistory
+          movements={item.movements}
+          unit={item.unit}
+          userNameMap={userNameMap}
+          canCancel={canCancelMovement}
+        />
       </div>
     </div>
   )

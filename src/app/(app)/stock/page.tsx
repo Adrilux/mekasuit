@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Plus, Package, AlertTriangle, ArrowLeftRight } from "lucide-react"
+import { Plus, Package, AlertTriangle, ArrowLeftRight, ClipboardList } from "lucide-react"
 import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { assertModuleActive, isModuleActive } from "@/lib/modules/module-access-checker"
 import { ModuleName } from "@prisma/client"
@@ -35,6 +35,7 @@ export default async function StockPage({
 
   const canCreate = can(session.role, "stock:create")
   const canScan = can(session.role, "stock:movement")
+  const canInventory = can(session.role, "stock:movement")
   const canTransfer = can(session.role, "stock:transfer:create") && await isModuleActive(session.tenantId, ModuleName.INTER_SITE_TRANSFERS)
 
   const lowStockItems = items.filter((i) => i.quantityOnHand <= i.minimumLevel && i.minimumLevel > 0)
@@ -58,6 +59,14 @@ export default async function StockPage({
         </div>
         <div className="flex flex-wrap gap-2">
           <ExportCsvButton href={exportUrl} />
+          {canInventory && (
+            <Button asChild variant="outline" size="sm">
+              <Link href="/stock/inventory">
+                <ClipboardList className="w-4 h-4 mr-1" />
+                Inventaire
+              </Link>
+            </Button>
+          )}
           {canTransfer && (
             <Button asChild variant="outline" size="sm">
               <Link href="/stock/transfers">

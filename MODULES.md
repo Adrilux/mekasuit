@@ -51,7 +51,7 @@ Planifier la maintenance préventive.
 | ✅ Chaîne de récurrence | Vue de toutes les occurrences passées et futures d'une même préventive | Lecture |
 | ✅ Planning visuel | Calendrier mois/semaine des interventions planifiées. Couleur par priorité, clic → fiche intervention. Route /planning | Voir calendrier, changer vue mois/semaine |
 | ✅ Modèles d'intervention | Créer un modèle réutilisable (nom, description, type, priorité, checklist). Pré-remplit le formulaire à la création. Géré dans /settings/templates | Créer modèle, modifier, supprimer, utiliser à la création |
-| 🔲 Déclenchement par compteur | Quand un compteur machine atteint un seuil → créer automatiquement une préventive | Configurer seuil, lier à modèle d'intervention |
+| ✅ Déclenchement par compteur | Quand un compteur machine atteint un seuil → créer automatiquement une préventive. Seuil recalibré par intervalle après déclenchement | Configurer seuil + intervalle sur le compteur, lié au modèle d'intervention |
 
 ---
 
@@ -66,9 +66,9 @@ Gérer le référentiel des pièces et consommables.
 | ✅ Lier article à machine | Associer optionnellement un article à une machine (pièce dédiée) | Lier, délier |
 | ✅ Alertes rupture | Article signalé comme "rupture" si quantité ≤ seuil minimum. Badge rouge visible partout | Automatique, configurer seuil |
 | ✅ Historique mouvements | Traçabilité de tous les mouvements IN/OUT/ADJUSTMENT/TRANSFER sur l'article | Lecture, filtrer par période |
-| 🔲 Code-barres / QR code article | Générer un code-barres ou QR code pour l'article. Scan pour accès rapide fiche | Générer, imprimer étiquette |
-| 🔲 Fournisseurs | Lier un article à un ou plusieurs fournisseurs avec référence fournisseur et prix d'achat | Créer fournisseur, lier article, voir tarifs |
-| 🔲 Délai réapprovisionnement | Délai estimé en jours pour recevoir l'article (par fournisseur). Visible sur la fiche | Configurer, modifier |
+| ✅ QR code article | Générer et imprimer une étiquette QR code par article (référence + nom). Accès direct à la fiche via scan | Générer, imprimer étiquette (bouton "Étiquette QR" sur la fiche) |
+| ✅ Fournisseurs | Lier un article à un ou plusieurs fournisseurs avec référence fournisseur et prix d'achat. Panneau sur la fiche article | Créer fournisseur, lier article, modifier, délier |
+| ✅ Délai réapprovisionnement | Délai estimé en jours par lien article-fournisseur. Visible dans le panneau fournisseurs | Configurer lors du lien article↔fournisseur |
 
 ### 2.2 Mouvements de stock
 
@@ -79,8 +79,8 @@ Gérer le référentiel des pièces et consommables.
 | ✅ Ajustement inventaire | Correction de quantité (type ADJUSTMENT) avec raison obligatoire | Enregistrer ajustement |
 | ✅ Scan code-barres | Faire une entrée/sortie via scan mobile (caméra ou douchette) | Scanner, valider mouvement |
 | ✅ Consommation sur intervention | Enregistrer les pièces utilisées sur une intervention. Décrémente le stock automatiquement. Réversible | Ajouter pièce, retirer pièce (remet le stock) |
-| 🔲 Inventaire physique | Session d'inventaire : saisie quantités réelles article par article → calcul écarts → validation génère ajustements en masse | Ouvrir session, saisir comptage, valider, exporter écarts |
-| 🔲 Annulation mouvement | Annuler un mouvement récent (dans limite configurable ex: 24h) avec justification. Génère un mouvement compensatoire | Annuler, voir historique annulations |
+| ✅ Inventaire physique | Session couvrant tous les articles du site. Saisie quantités réelles, écart calculé en temps réel, validation génère des ajustements ADJUSTMENT en masse. Route /stock/inventory | Ouvrir session, saisir comptage article par article, valider et clôturer |
+| ✅ Annulation mouvement | Workshop manager+ peut annuler tout mouvement IN/OUT/ADJUSTMENT (pas les transferts). Génère un ADJUSTMENT compensatoire. Ligne marquée "Annulé" sur la fiche article | Annuler avec raison optionnelle depuis la fiche article |
 
 ### 2.3 Transferts inter-sites
 
@@ -185,8 +185,8 @@ Gérer le référentiel des pièces et consommables.
 
 | Module | Statut | Fonctionnalités existantes | À développer |
 |---|---|---|---|
-| GMAO | ✅ Obligatoire | Machines (fiche, notes, pièces jointes, timeline, statut, archivage/restauration, QR code régénérable, compteurs, BOM), interventions (pièces jointes, pointage heures, checklists + modèles), préventives, récurrence, QR codes | Planning calendrier, SLA, signature, modèles d'intervention |
-| Stock | ✅ Optionnel (dépend GMAO) | Catalogue, mouvements, consommation sur intervention, scan barcode, alertes rupture, transferts | Inventaire physique, annulation mouvement, fournisseurs, commandes BC |
+| GMAO | ✅ Obligatoire | Machines (fiche, notes, pièces jointes, timeline, statut, archivage/restauration, QR code régénérable, compteurs + déclenchement préventive, BOM), interventions (pièces jointes, pointage heures, checklists + modèles de checklist), préventives (récurrence, matériaux, chaîne, planning /planning, modèles d'intervention, déclenchement compteur) | Signature électronique, SLA |
+| Stock | ✅ Optionnel (dépend GMAO) | Catalogue (fiche, QR code étiquette, fournisseurs + délai réappro), mouvements (avec annulation), inventaire physique /stock/inventory, consommation sur intervention, scan barcode, alertes rupture, transferts | Commandes BC fournisseurs |
 | Rapports avancés | ✅ Optionnel | MTBF, charge technicien, coût maintenance | Taux disponibilité, SLA, export PDF, rapport custom |
 | Assistant IA | ✅ Optionnel | Génération description intervention | Analyse pannes, suggestion pièces, résumé clôture |
 | Notifications | ✅ Inclus | In-app (6 types) | Email, récap planifié |

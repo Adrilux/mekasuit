@@ -124,6 +124,74 @@
 
 - Signature électronique (non demandée pour l'instant)
 - SLA / temps de réponse (non demandé pour l'instant)
-- Planning visuel calendrier (prévu dans 1.3)
-- Modèles d'intervention (prévu dans 1.3)
+
+---
+
+## 1.3 PRÉVENTIVE & RÉCURRENCE
+
+| Feature | Statut | Notes |
+|---|---|---|
+| Récurrence automatique | ✅ | À la clôture d'une préventive → création automatique selon fréquence |
+| Matériaux prévus copiés | ✅ | Pièces prévues copiées sur la nouvelle occurrence |
+| Date fin récurrence (`recurrenceEndsAt`) | ✅ | Respectée à la génération |
+| Chaîne de récurrence | ✅ | Vue de toutes les occurrences via `parentInterventionId` |
+| Planning visuel | ✅ | Route `/planning` — calendrier mois/semaine, couleur par priorité, clic → fiche |
+| Modèles d'intervention | ✅ | CRUD dans `/settings/templates` — `InterventionTemplate` + checklist items. Pré-remplit le formulaire à la création |
+| Déclenchement par compteur | ✅ | Quand un relevé de compteur atteint le seuil → préventive créée automatiquement. Seuil recalibré par intervalle |
+
+### Restant
+
+- Signature électronique (non demandée pour l'instant)
+- SLA / temps de réponse (non demandé pour l'instant)
+
+---
+
+## 2.1 CATALOGUE ARTICLES (STOCK)
+
+| Feature | Statut | Notes |
+|---|---|---|
+| Fiche article | ✅ | Référence unique par site, nom, unité, quantité, seuil, prix unitaire (centimes) |
+| Liste avec filtre & recherche | ✅ | Recherche nom/référence, filtre rupture, tri par seuil |
+| Alertes rupture | ✅ | Badge rouge si quantité ≤ seuil minimum |
+| Lier article à machine | ✅ | FK optionnel `machineId` sur `StockItem` |
+| Historique mouvements | ✅ | 50 derniers mouvements avec opérateur résolu |
+| QR code / étiquette article | ✅ | Dialog "Étiquette QR" sur la fiche — QR code + référence + nom, bouton impression |
+| Fournisseurs | ✅ | Modèle `Supplier` tenant-scoped. Panneau sur la fiche article — créer fournisseur à la volée ou sélectionner existant |
+| Délai réapprovisionnement | ✅ | Champ `leadTimeDays` sur le lien `StockItemSupplier` — affiché dans le panneau fournisseurs |
+| Inventaire physique | ✅ | Session couvrant tous les articles du site. Route `/stock/inventory`. Saisie comptage avec écart en temps réel, validation → ajustements ADJUSTMENT en masse. `StockInventorySession` + `StockInventoryItem` |
+| Annulation mouvement | ✅ | Workshop manager+, sans limite de temps. TRANSFER non annulables. Génère ADJUSTMENT compensatoire + `cancelledAt/By/Reason` sur le mouvement. Composant `StockMovementHistory` client |
+
+---
+
+## 2.2 MOUVEMENTS DE STOCK
+
+| Feature | Statut | Notes |
+|---|---|---|
+| Entrée en stock (IN) | ✅ | |
+| Sortie manuelle (OUT) | ✅ | |
+| Ajustement inventaire (ADJUSTMENT) | ✅ | Raison obligatoire |
+| Scan code-barres | ✅ | Via caméra ou douchette, résolution par `reference` |
+| Consommation sur intervention | ✅ | Décrémente stock, réversible |
+
+---
+
+## 2.3 TRANSFERTS INTER-SITES
+
+| Feature | Statut | Notes |
+|---|---|---|
+| Demande de transfert | ✅ | |
+| Approbation / rejet | ✅ | Manager du site source |
+| Complétion (réception) | ✅ | Génère TRANSFER_OUT + TRANSFER_IN automatiquement |
+| Notifications | ✅ | Managers notifiés à chaque étape |
+
+---
+
+## 2.4 COMMANDES FOURNISSEURS
+
+| Feature | Statut | Notes |
+|---|---|---|
+| Bon de commande | ❌ | À développer |
+| Workflow statuts BC | ❌ | À développer |
+| Réception partielle | ❌ | À développer |
+| Lien rupture → commande | ❌ | À développer |
 
