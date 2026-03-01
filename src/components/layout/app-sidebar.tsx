@@ -28,93 +28,53 @@ type NavItem = {
   label: string
   href: string
   icon: React.ComponentType<{ className?: string }>
-  module?: ModuleName // si défini, l'item est caché si le module est inactif
-  roles?: string[]   // si défini, l'item est caché selon le rôle
-  exact?: boolean    // si true, actif uniquement sur l'URL exacte (pas les sous-routes)
+  module?: ModuleName
+  roles?: string[]
+  exact?: boolean
 }
 
-const NAV_ITEMS: NavItem[] = [
+type NavGroup = {
+  label?: string
+  items: NavItem[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    exact: true,
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
+      { label: "Aujourd'hui", href: "/today", icon: CalendarCheck, exact: true },
+      { label: "Notifications", href: "/notifications", icon: Bell, exact: true },
+    ],
   },
   {
-    label: "Machines",
-    href: "/machines",
-    icon: Wrench,
-  },
-  {
-    label: "Interventions",
-    href: "/interventions",
-    icon: ClipboardList,
-  },
-  {
-    label: "Aujourd'hui",
-    href: "/today",
-    icon: CalendarCheck,
-    exact: true,
-  },
-  {
-    label: "Préventives",
-    href: "/preventive",
-    icon: CalendarClock,
+    label: "Maintenance",
+    items: [
+      { label: "Machines", href: "/machines", icon: Wrench },
+      { label: "Interventions", href: "/interventions", icon: ClipboardList },
+      { label: "Préventives", href: "/preventive", icon: CalendarClock },
+    ],
   },
   {
     label: "Stock",
-    href: "/stock",
-    icon: Package,
-    module: ModuleName.STOCK_MANAGEMENT,
+    items: [
+      { label: "Articles", href: "/stock", icon: Package, module: ModuleName.STOCK_MANAGEMENT },
+      { label: "Transferts", href: "/stock/transfers", icon: ArrowLeftRight, module: ModuleName.INTER_SITE_TRANSFERS },
+    ],
   },
   {
-    label: "Transferts",
-    href: "/stock/transfers",
-    icon: ArrowLeftRight,
-    module: ModuleName.INTER_SITE_TRANSFERS,
+    label: "Analyses",
+    items: [
+      { label: "Rapports", href: "/reports", icon: BarChart3, module: ModuleName.ADVANCED_REPORTS },
+      { label: "Assistant IA", href: "/ai-assistant", icon: Bot, module: ModuleName.AI_ASSISTANT },
+    ],
   },
   {
-    label: "Rapports",
-    href: "/reports",
-    icon: BarChart3,
-    module: ModuleName.ADVANCED_REPORTS,
-  },
-  {
-    label: "Assistant IA",
-    href: "/ai-assistant",
-    icon: Bot,
-    module: ModuleName.AI_ASSISTANT,
-  },
-  {
-    label: "Notifications",
-    href: "/notifications",
-    icon: Bell,
-    exact: true,
-  },
-  {
-    label: "Utilisateurs",
-    href: "/users",
-    icon: Users,
-    roles: ["super_admin", "client_admin"],
-  },
-  {
-    label: "Rôles",
-    href: "/settings/roles",
-    icon: Shield,
-    roles: ["client_admin"],
-  },
-  {
-    label: "Paramètres",
-    href: "/settings",
-    icon: Settings,
-    roles: ["super_admin", "client_admin"],
-    exact: true,
-  },
-  {
-    label: "Super Admin",
-    href: "/admin",
-    icon: Shield,
-    roles: ["super_admin"],
+    label: "Administration",
+    items: [
+      { label: "Utilisateurs", href: "/users", icon: Users, roles: ["super_admin", "client_admin"] },
+      { label: "Paramètres", href: "/settings", icon: Settings, roles: ["super_admin", "client_admin"], exact: true },
+      { label: "Super Admin", href: "/admin", icon: Shield, roles: ["super_admin"] },
+    ],
   },
 ]
 
@@ -127,11 +87,45 @@ export function AppSidebar({ pendingTransfersCount = 0 }: Props) {
   const { isModuleActive, session } = useTenantContext()
   const { isOpen, close } = useSidebar()
 
-  const visibleItems = NAV_ITEMS.filter((item) => {
-    if (item.module && !isModuleActive(item.module)) return false
-    if (item.roles && !item.roles.includes(session.role)) return false
-    return true
-  })
+  function filterItems(items: NavItem[]) {
+    return items.filter((item) => {
+      if (item.module && !isModuleActive(item.module)) return false
+      if (item.roles && !item.roles.includes(session.role)) return false
+      return true
+    })
+  }
+
+  const visibleGroups = NAV_GROUPS
+    .map((group) => ({ ...group, items: filterItems(group.items) }))
+    .filter((group) => group.items.length > 0)
+
+  function renderItem(item: NavItem) {
+    const isActive = item.exact
+      ? pathname === item.href
+      : pathname.startsWith(item.href)
+    const showBadge = item.href === "/stock/transfers" && pendingTransfersCount > 0
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={close}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+          isActive
+            ? "bg-blue-50 text-blue-700"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+        )}
+      >
+        <item.icon className="w-4 h-4 shrink-0" />
+        <span className="flex-1">{item.label}</span>
+        {showBadge && (
+          <span className="ml-auto min-w-[1.25rem] h-5 px-1 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">
+            {pendingTransfersCount > 99 ? "99+" : pendingTransfersCount}
+          </span>
+        )}
+      </Link>
+    )
+  }
 
   const sidebarContent = (
     <>
@@ -153,34 +147,19 @@ export function AppSidebar({ pendingTransfersCount = 0 }: Props) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-        {visibleItems.map((item) => {
-          const isActive = item.exact
-            ? pathname === item.href
-            : pathname.startsWith(item.href)
-          const showBadge = item.href === "/stock/transfers" && pendingTransfersCount > 0
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={close}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-              )}
-            >
-              <item.icon className="w-4 h-4 shrink-0" />
-              <span className="flex-1">{item.label}</span>
-              {showBadge && (
-                <span className="ml-auto min-w-[1.25rem] h-5 px-1 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">
-                  {pendingTransfersCount > 99 ? "99+" : pendingTransfersCount}
-                </span>
-              )}
-            </Link>
-          )
-        })}
+      <nav className="flex-1 py-3 px-2 overflow-y-auto space-y-4">
+        {visibleGroups.map((group, i) => (
+          <div key={i}>
+            {group.label && (
+              <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                {group.label}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {group.items.map(renderItem)}
+            </div>
+          </div>
+        ))}
       </nav>
     </>
   )
