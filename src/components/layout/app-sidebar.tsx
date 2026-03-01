@@ -8,6 +8,7 @@ import {
   ClipboardList,
   CalendarClock,
   CalendarCheck,
+  CalendarDays,
   Package,
   ArrowLeftRight,
   BarChart3,
@@ -52,6 +53,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: "Machines", href: "/machines", icon: Wrench },
       { label: "Interventions", href: "/interventions", icon: ClipboardList },
       { label: "Préventives", href: "/preventive", icon: CalendarClock },
+      { label: "Planning", href: "/planning", icon: CalendarDays },
     ],
   },
   {
