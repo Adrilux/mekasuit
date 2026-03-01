@@ -13,10 +13,11 @@ export const auth = betterAuth({
 
   secret: serverEnv.BETTER_AUTH_SECRET,
   baseURL: serverEnv.BETTER_AUTH_URL,
+  trustedOrigins: [serverEnv.BETTER_AUTH_URL],
 
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: serverEnv.APP_ENV === "production",
+    requireEmailVerification: false,
   },
 
   session: {
