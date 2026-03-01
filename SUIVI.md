@@ -195,3 +195,17 @@
 | Réception partielle | ✅ | `action-receive-purchase-order-items` — incrémente stock + crée mouvement IN par article. Statut RECEIVED quand tout reçu |
 | Lien rupture → commande | ✅ | Page `/stock/low-stock` — articles sous seuil avec cases à cocher. "Commander la sélection" → pré-remplit formulaire BC via `?items=` |
 
+---
+
+## MODULE 3 — RAPPORTS AVANCÉS
+
+| Feature | Statut | Notes |
+|---|---|---|
+| MTBF par machine | ✅ | `queryGetMtbfBySite` — calcul gaps entre interventions correctives clôturées. Coloration rouge/amber/vert |
+| Charge technicien | ✅ | `queryGetTechnicianLoad` — groupé par `assignedUserId`. Graphique + tableau |
+| Coût maintenance | ✅ | `queryGetMaintenanceCostBySite` — pièces consommées × prix unitaire par machine. PieChart |
+| Taux de disponibilité | ✅ | `queryGetAvailability` — downtime = cumul durée interventions correctives clampé à la période. BarChart coloré ≥95%/≥80%/<80% |
+| Rapport SLA | ✅ | `queryGetSlaReport` — SLA fixes : CRITICAL 4h, HIGH 24h, MEDIUM 72h, LOW 168h. BarChart groupé Dans les délais / Hors délais |
+| Export PDF | ✅ | Page `/reports/print?siteId&from&to` — rendu HTML épuré + `@media print` + auto-print via `window.onload`. Tous les 5 rapports inclus |
+| Rapport personnalisé | ✅ | `CustomReport` modèle DB (colonnes[], filtres JSON). CRUD actions. Pages `/reports/custom` (liste), `/reports/custom/new`, `/reports/custom/[id]`, `/reports/custom/[id]/edit`. Composant `CustomReportBuilder` (cases à cocher colonnes, filtres, aperçu, sauvegarde) |
+

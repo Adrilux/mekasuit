@@ -109,10 +109,10 @@ Gérer le référentiel des pièces et consommables.
 | ✅ MTBF par machine | Temps moyen entre pannes (interventions correctives) par machine | Lecture, filtrer par site/période |
 | ✅ Charge technicien | Interventions par technicien (total, ouvertes, fermées, correctives, préventives, critiques) | Lecture, filtrer par période |
 | ✅ Coût maintenance | Coût pièces consommées par machine. Valorisation stock consommé | Lecture, filtrer par site/période |
-| 🔲 Taux de disponibilité | Ratio temps machine OPERATIONAL vs total. Par machine et par site | Lecture, filtrer par période |
-| 🔲 Rapport SLA | Taux de respect des délais d'intervention par priorité. Évolution dans le temps | Lecture, exporter |
-| 🔲 Export rapport | Exporter un rapport en PDF mis en page avec logo tenant | Exporter |
-| 🔲 Rapport personnalisé | Créer une vue rapport avec colonnes, filtres et regroupements choisis. Sauvegardable | Créer, modifier, supprimer, exporter |
+| ✅ Taux de disponibilité | Ratio uptime machine basé sur durée des interventions correctives. Par machine, graphique coloré (vert/amber/rouge) | Lecture, filtrer par site/période |
+| ✅ Rapport SLA | Taux de respect des délais d'intervention par priorité (Critique 4h, Haute 24h, Moyenne 72h, Basse 168h). Graphique + tableau | Lecture, filtrer par période |
+| ✅ Export rapport PDF | Exporter tous les rapports en PDF via window.print() + CSS @media print. Page dédiée /reports/print | Exporter |
+| ✅ Rapport personnalisé | Créer une vue rapport avec colonnes choisies, filtres (site, période). Sauvegardable en DB. Route /reports/custom | Créer, modifier, supprimer, exporter |
 
 ---
 
@@ -186,7 +186,7 @@ Gérer le référentiel des pièces et consommables.
 |---|---|---|---|
 | GMAO | ✅ Obligatoire | Machines (fiche, notes, pièces jointes, timeline, statut, archivage/restauration, QR code régénérable, compteurs + déclenchement préventive, BOM), interventions (pièces jointes, pointage heures, checklists + modèles de checklist), préventives (récurrence, matériaux, chaîne, planning /planning, modèles d'intervention, déclenchement compteur) | Signature électronique, SLA |
 | Stock | ✅ Optionnel (dépend GMAO) | Catalogue (fiche, QR code étiquette, fournisseurs + délai réappro), mouvements (avec annulation), inventaire physique, consommation sur intervention, scan barcode, alertes rupture, transferts, commandes fournisseurs (BC workflow + réception partielle + ruptures) | — |
-| Rapports avancés | ✅ Optionnel | MTBF, charge technicien, coût maintenance | Taux disponibilité, SLA, export PDF, rapport custom |
+| Rapports avancés | ✅ Optionnel | MTBF, charge technicien, coût maintenance, taux disponibilité, SLA, export PDF, rapports personnalisés | — |
 | Assistant IA | ✅ Optionnel | Génération description intervention | Analyse pannes, suggestion pièces, résumé clôture |
 | Notifications | ✅ Inclus | In-app (6 types) | Email, récap planifié |
 | Administration | ✅ Inclus | Tenant, utilisateurs, rôles custom, organigramme, audit | Plan 2D site |

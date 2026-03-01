@@ -843,6 +843,24 @@ enum NotificationType {
 }
 
 // =============================================================================
+// RAPPORTS PERSONNALISÉS
+// =============================================================================
+
+model CustomReport {
+  id        String   @id @default(cuid())
+  tenantId  String
+  createdBy String   // userId Better Auth
+  name      String
+  columns   String[] // ex: ["machineName", "mtbfHours", "availabilityRate"]
+  filters   Json     // { siteId?, from?, to?, type?, priority? }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("custom_reports")
+}
+
+// =============================================================================
 // AUDIT TRAIL
 // =============================================================================
 
