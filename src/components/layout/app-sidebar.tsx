@@ -11,6 +11,8 @@ import {
   CalendarDays,
   Package,
   ArrowLeftRight,
+  ShoppingCart,
+  AlertTriangle,
   BarChart3,
   Bell,
   Users,
@@ -61,6 +63,8 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Articles", href: "/stock", icon: Package, module: ModuleName.STOCK_MANAGEMENT },
       { label: "Transferts", href: "/stock/transfers", icon: ArrowLeftRight, module: ModuleName.INTER_SITE_TRANSFERS },
+      { label: "Commandes", href: "/stock/purchase-orders", icon: ShoppingCart, module: ModuleName.STOCK_MANAGEMENT },
+      { label: "Ruptures", href: "/stock/low-stock", icon: AlertTriangle, module: ModuleName.STOCK_MANAGEMENT },
     ],
   },
   {
@@ -82,9 +86,10 @@ const NAV_GROUPS: NavGroup[] = [
 
 type Props = {
   pendingTransfersCount?: number
+  draftPurchaseOrdersCount?: number
 }
 
-export function AppSidebar({ pendingTransfersCount = 0 }: Props) {
+export function AppSidebar({ pendingTransfersCount = 0, draftPurchaseOrdersCount = 0 }: Props) {
   const pathname = usePathname()
   const { isModuleActive, session } = useTenantContext()
   const { isOpen, close } = useSidebar()
@@ -105,7 +110,11 @@ export function AppSidebar({ pendingTransfersCount = 0 }: Props) {
     const isActive = item.exact
       ? pathname === item.href
       : pathname.startsWith(item.href)
-    const showBadge = item.href === "/stock/transfers" && pendingTransfersCount > 0
+    const showBadge =
+      (item.href === "/stock/transfers" && pendingTransfersCount > 0) ||
+      (item.href === "/stock/purchase-orders" && draftPurchaseOrdersCount > 0)
+    const badgeCount =
+      item.href === "/stock/transfers" ? pendingTransfersCount : draftPurchaseOrdersCount
     return (
       <Link
         key={item.href}
@@ -122,7 +131,7 @@ export function AppSidebar({ pendingTransfersCount = 0 }: Props) {
         <span className="flex-1">{item.label}</span>
         {showBadge && (
           <span className="ml-auto min-w-[1.25rem] h-5 px-1 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">
-            {pendingTransfersCount > 99 ? "99+" : pendingTransfersCount}
+            {badgeCount > 99 ? "99+" : badgeCount}
           </span>
         )}
       </Link>

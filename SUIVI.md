@@ -190,8 +190,8 @@
 
 | Feature | Statut | Notes |
 |---|---|---|
-| Bon de commande | ❌ | À développer |
-| Workflow statuts BC | ❌ | À développer |
-| Réception partielle | ❌ | À développer |
-| Lien rupture → commande | ❌ | À développer |
+| Bon de commande | ✅ | `PurchaseOrder` + `PurchaseOrderItem`. Multi-articles, fournisseur, prix unitaires, date livraison, notes |
+| Workflow statuts BC | ✅ | DRAFT → ORDERED (approuvé par client_admin+) → RECEIVED / CANCELLED. `action-approve-purchase-order`, `action-cancel-purchase-order` |
+| Réception partielle | ✅ | `action-receive-purchase-order-items` — incrémente stock + crée mouvement IN par article. Statut RECEIVED quand tout reçu |
+| Lien rupture → commande | ✅ | Page `/stock/low-stock` — articles sous seuil avec cases à cocher. "Commander la sélection" → pré-remplit formulaire BC via `?items=` |
 

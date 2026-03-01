@@ -91,15 +91,14 @@ Gérer le référentiel des pièces et consommables.
 | ✅ Complétion transfert | Confirmation réception côté destination. Mouvements TRANSFER_OUT/IN générés automatiquement | Compléter |
 | ✅ Notification transfert | Managers notifiés à chaque étape | Automatique |
 
-### 2.4 Commandes fournisseurs *(🔲 à créer)*
+### 2.4 Commandes fournisseurs
 
 | Fonctionnalité | Description | Opérations |
 |---|---|---|
-| 🔲 Bon de commande | Créer un BC avec lignes par article (référence, quantité, prix unitaire, fournisseur) | Créer, modifier, supprimer ligne |
-| 🔲 Statuts BC | Workflow : DRAFT → SENT → PARTIALLY_RECEIVED → RECEIVED → CANCELLED | Changer statut |
-| 🔲 Réception partielle | Réceptionner une partie seulement du BC. Génère mouvements IN proportionnels | Saisir quantités reçues, valider réception |
-| 🔲 Lien rupture → commande | Depuis un article en rupture, créer directement un BC pré-rempli | Action rapide sur fiche article |
-| 🔲 Historique commandes | Voir toutes les commandes passées, statuts, fournisseurs | Lecture, filtrer |
+| ✅ Bon de commande | Créer un BC multi-articles avec fournisseur, quantités, prix unitaires, date de livraison prévue et notes. Workflow DRAFT → ORDERED → RECEIVED | Créer, voir détail, voir historique |
+| ✅ Workflow statuts BC | DRAFT (brouillon, en attente d'approbation) → ORDERED (approuvé) → RECEIVED (réceptionné) ou CANCELLED. Approuvé par client_admin+ | Approuver, annuler |
+| ✅ Réception partielle | Réceptionner les articles au fil des livraisons. Incrémente le stock (mouvement IN) à chaque réception. Statut passe à RECEIVED quand tout est reçu | Saisir quantités reçues par article, enregistrer |
+| ✅ Lien rupture → commande | Page /stock/low-stock listant tous les articles sous seuil. Cases à cocher + "Commander la sélection" pré-remplit le formulaire BC | Cocher articles, commander en masse |
 
 ---
 
@@ -186,7 +185,7 @@ Gérer le référentiel des pièces et consommables.
 | Module | Statut | Fonctionnalités existantes | À développer |
 |---|---|---|---|
 | GMAO | ✅ Obligatoire | Machines (fiche, notes, pièces jointes, timeline, statut, archivage/restauration, QR code régénérable, compteurs + déclenchement préventive, BOM), interventions (pièces jointes, pointage heures, checklists + modèles de checklist), préventives (récurrence, matériaux, chaîne, planning /planning, modèles d'intervention, déclenchement compteur) | Signature électronique, SLA |
-| Stock | ✅ Optionnel (dépend GMAO) | Catalogue (fiche, QR code étiquette, fournisseurs + délai réappro), mouvements (avec annulation), inventaire physique /stock/inventory, consommation sur intervention, scan barcode, alertes rupture, transferts | Commandes BC fournisseurs |
+| Stock | ✅ Optionnel (dépend GMAO) | Catalogue (fiche, QR code étiquette, fournisseurs + délai réappro), mouvements (avec annulation), inventaire physique, consommation sur intervention, scan barcode, alertes rupture, transferts, commandes fournisseurs (BC workflow + réception partielle + ruptures) | — |
 | Rapports avancés | ✅ Optionnel | MTBF, charge technicien, coût maintenance | Taux disponibilité, SLA, export PDF, rapport custom |
 | Assistant IA | ✅ Optionnel | Génération description intervention | Analyse pannes, suggestion pièces, résumé clôture |
 | Notifications | ✅ Inclus | In-app (6 types) | Email, récap planifié |

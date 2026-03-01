@@ -22,6 +22,10 @@ export type Action =
   | "stock:read"
   | "stock:transfer:create"
   | "stock:transfer:approve"
+  | "stock:po:create"
+  | "stock:po:approve"
+  | "stock:po:receive"
+  | "stock:po:cancel"
   // Sites
   | "site:create"
   | "site:update"
@@ -47,6 +51,7 @@ export const ALL_ACTIONS: Action[] = [
   "machine:create", "machine:update", "machine:archive", "machine:read",
   "intervention:create", "intervention:update", "intervention:close", "intervention:cancel", "intervention:read", "intervention:assign",
   "stock:create", "stock:update", "stock:movement", "stock:movement:cancel", "stock:read", "stock:transfer:create", "stock:transfer:approve",
+  "stock:po:create", "stock:po:approve", "stock:po:receive", "stock:po:cancel",
   "site:create", "site:update", "site:deactivate", "site:read",
   "user:invite", "user:update-role", "user:deactivate", "user:read",
   "module:activate", "module:deactivate",
@@ -59,7 +64,7 @@ export const ALL_ACTIONS: Action[] = [
 export const ACTION_GROUPS: { label: string; actions: Action[] }[] = [
   { label: "Machines", actions: ["machine:read", "machine:create", "machine:update", "machine:archive"] },
   { label: "Interventions", actions: ["intervention:read", "intervention:create", "intervention:update", "intervention:assign", "intervention:close", "intervention:cancel"] },
-  { label: "Stock", actions: ["stock:read", "stock:create", "stock:update", "stock:movement", "stock:movement:cancel", "stock:transfer:create", "stock:transfer:approve"] },
+  { label: "Stock", actions: ["stock:read", "stock:create", "stock:update", "stock:movement", "stock:movement:cancel", "stock:transfer:create", "stock:transfer:approve", "stock:po:create", "stock:po:approve", "stock:po:receive", "stock:po:cancel"] },
   { label: "Sites", actions: ["site:read", "site:create", "site:update", "site:deactivate"] },
   { label: "Utilisateurs", actions: ["user:read", "user:invite", "user:update-role", "user:deactivate"] },
   { label: "Modules", actions: ["module:activate", "module:deactivate"] },
@@ -85,6 +90,10 @@ export const ACTION_LABELS: Record<Action, string> = {
   "stock:read": "Voir le stock",
   "stock:transfer:create": "Demander transferts",
   "stock:transfer:approve": "Approuver transferts",
+  "stock:po:create": "Créer commandes fournisseurs",
+  "stock:po:approve": "Approuver commandes fournisseurs",
+  "stock:po:receive": "Réceptionner commandes fournisseurs",
+  "stock:po:cancel": "Annuler commandes fournisseurs",
   "site:create": "Créer sites",
   "site:update": "Modifier sites",
   "site:deactivate": "Désactiver sites",
@@ -106,6 +115,7 @@ const PERMISSION_MATRIX: Record<UserRole, Action[]> = {
     "machine:create", "machine:update", "machine:archive", "machine:read",
     "intervention:create", "intervention:update", "intervention:close", "intervention:cancel", "intervention:read", "intervention:assign",
     "stock:create", "stock:update", "stock:movement", "stock:movement:cancel", "stock:read", "stock:transfer:create", "stock:transfer:approve",
+    "stock:po:create", "stock:po:approve", "stock:po:receive", "stock:po:cancel",
     "site:create", "site:update", "site:deactivate", "site:read",
     "user:invite", "user:update-role", "user:deactivate", "user:read",
     "module:activate", "module:deactivate",
@@ -117,6 +127,7 @@ const PERMISSION_MATRIX: Record<UserRole, Action[]> = {
     "machine:create", "machine:update", "machine:archive", "machine:read",
     "intervention:create", "intervention:update", "intervention:close", "intervention:cancel", "intervention:read", "intervention:assign",
     "stock:create", "stock:update", "stock:movement", "stock:movement:cancel", "stock:read", "stock:transfer:create", "stock:transfer:approve",
+    "stock:po:create", "stock:po:approve", "stock:po:receive", "stock:po:cancel",
     "site:create", "site:update", "site:deactivate", "site:read",
     "user:invite", "user:update-role", "user:deactivate", "user:read",
     "module:activate", "module:deactivate",
@@ -127,6 +138,7 @@ const PERMISSION_MATRIX: Record<UserRole, Action[]> = {
     "machine:create", "machine:update", "machine:read",
     "intervention:create", "intervention:update", "intervention:close", "intervention:cancel", "intervention:read", "intervention:assign",
     "stock:update", "stock:movement", "stock:movement:cancel", "stock:read", "stock:transfer:create", "stock:transfer:approve",
+    "stock:po:create", "stock:po:receive",
     "site:read",
     "user:read",
     "report:read",

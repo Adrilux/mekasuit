@@ -150,6 +150,7 @@ model Site {
   transfersFrom      StockTransferRequest[]     @relation("TransferFromSite")
   transfersTo        StockTransferRequest[]     @relation("TransferToSite")
   inventorySessions  StockInventorySession[]
+  purchaseOrders     PurchaseOrder[]
 
   @@index([tenantId])
   @@map("sites")
@@ -609,6 +610,7 @@ model StockItem {
   machineComponents   MachineComponent[]
   supplierLinks       StockItemSupplier[]
   inventoryItems      StockInventoryItem[]
+  purchaseOrderItems  PurchaseOrderItem[]
 
   @@unique([tenantId, siteId, reference]) // référence unique par site
   @@index([tenantId, siteId])
@@ -623,7 +625,8 @@ model Supplier {
   email    String?
   phone    String?
 
-  stockLinks StockItemSupplier[]
+  stockLinks     StockItemSupplier[]
+  purchaseOrders PurchaseOrder[]
 
   @@index([tenantId])
   @@map("suppliers")
@@ -758,6 +761,56 @@ enum TransferStatus {
   APPROVED  // approuvé, en attente d'exécution
   REJECTED  // refusé
   COMPLETED // exécuté
+}
+
+// =============================================================================
+// COMMANDES FOURNISSEURS (Purchase Orders)
+// =============================================================================
+
+enum PurchaseOrderStatus {
+  DRAFT     // créé, en attente d'approbation
+  ORDERED   // approuvé — commande envoyée au fournisseur
+  RECEIVED  // réception complète
+  CANCELLED // annulé
+}
+
+model PurchaseOrder {
+  id                   String              @id @default(cuid())
+  tenantId             String
+  siteId               String
+  site                 Site                @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  supplierId           String
+  supplier             Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  status               PurchaseOrderStatus @default(DRAFT)
+  expectedDeliveryDate DateTime?
+  notes                String?
+  createdBy            String              // userId Better Auth
+  approvedBy           String?
+  approvedAt           DateTime?
+  receivedAt           DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  items PurchaseOrderItem[]
+
+  @@index([tenantId, siteId])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id               String        @id @default(cuid())
+  tenantId         String
+  purchaseOrderId  String
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  stockItemId      String
+  stockItem        StockItem     @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  quantityOrdered  Int
+  unitPriceCents   Int           @default(0)
+  quantityReceived Int           @default(0)
+
+  @@unique([purchaseOrderId, stockItemId])
+  @@index([tenantId, purchaseOrderId])
+  @@map("purchase_order_items")
 }
 
 // =============================================================================
