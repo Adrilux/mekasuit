@@ -23,7 +23,7 @@ export function StockMovementDialog({ stockItemId, itemName, currentQuantity, un
         Mouvement de stock
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Mouvement de stock</DialogTitle>
           </DialogHeader>

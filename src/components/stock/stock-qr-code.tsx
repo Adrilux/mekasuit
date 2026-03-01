@@ -86,7 +86,7 @@ export function StockQrCode({ stockItemId, reference, itemName, baseUrl }: Props
           Étiquette QR
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xs">
+      <DialogContent className="max-w-xs" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>Étiquette article</DialogTitle>
         </DialogHeader>

@@ -143,7 +143,7 @@ export function InventorySessionTable({ sessionId, initialItems, isOpen }: Props
 
       {/* Dialog confirmation clôture */}
       <Dialog open={closeDialog} onOpenChange={setCloseDialog}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Valider l&apos;inventaire</DialogTitle>
           </DialogHeader>

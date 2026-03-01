@@ -161,7 +161,7 @@ export function StockMovementHistory({ movements: initialMovements, unit, userNa
       </div>
 
       <Dialog open={cancelDialog.open} onOpenChange={(o) => { setCancelDialog({ open: o, movementId: null }) }}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Annuler ce mouvement</DialogTitle>
           </DialogHeader>
