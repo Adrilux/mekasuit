@@ -209,3 +209,14 @@
 | Export PDF | ✅ | Page `/reports/print?siteId&from&to` — rendu HTML épuré + `@media print` + auto-print via `window.onload`. Tous les 5 rapports inclus |
 | Rapport personnalisé | ✅ | `CustomReport` modèle DB (colonnes[], filtres JSON). CRUD actions. Pages `/reports/custom` (liste), `/reports/custom/new`, `/reports/custom/[id]`, `/reports/custom/[id]/edit`. Composant `CustomReportBuilder` (cases à cocher colonnes, filtres, aperçu, sauvegarde) |
 
+---
+
+## MODULE 4 — ASSISTANT IA
+
+| Feature | Statut | Notes |
+|---|---|---|
+| Génération description | ✅ | Existant — `actionGenerateInterventionDescription` — Groq Llama 3.3 70B, bouton "Générer avec IA ✨" dans `intervention-form.tsx` |
+| Analyse pannes récurrentes | ✅ | `actionAnalyzeMachineFailures` — charge les 30 dernières pannes CORRECTIVE CLOSED, prompt structuré (pannes fréquentes, tendances, recommandations, niveau de risque). Page `/ai-assistant/machines` avec sélecteur machine + rendu markdown. Lien depuis `/ai-assistant` |
+| Suggestion de pièces | ✅ | `actionSuggestParts` — charge intervention + catalogue (50 articles), prompt demande refs exactes → match en JS. Composant `PartsSuggestionButton` sur fiche intervention (non terminée, modules AI+Stock actifs) → dialog avec suggestions + bouton "Ajouter" → `actionConsumeStockPart` |
+| Résumé d'intervention | ✅ | `actionGenerateInterventionSummary` — charge intervention CLOSED + technicien + notes + pièces, prompt résumé pro. Composant `InterventionSummaryButton` sur fiche intervention CLOSED → dialog avec résumé + bouton "Copier" |
+

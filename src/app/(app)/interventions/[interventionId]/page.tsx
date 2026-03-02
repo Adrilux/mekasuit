@@ -21,6 +21,8 @@ import { InterventionAttachments } from "@/components/interventions/intervention
 import { InterventionTimeTracking } from "@/components/interventions/intervention-time-tracking"
 import { InterventionChecklists } from "@/components/interventions/intervention-checklists"
 import { can } from "@/lib/permissions/permission-matrix"
+import { InterventionSummaryButton } from "@/components/interventions/intervention-summary-button"
+import { PartsSuggestionButton } from "@/components/interventions/parts-suggestion-button"
 
 const TYPE_LABELS: Record<string, string> = {
   CORRECTIVE: "Corrective (panne)",
@@ -58,7 +60,10 @@ export default async function InterventionDetailPage({
   // Charge le stock si le module est actif
   // - Toujours chargé pour afficher les noms dans les panels (même après clôture)
   // - Utilisé pour l'ajout uniquement si !isTerminal
-  const stockModuleActive = await isModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
+  const [stockModuleActive, aiModuleActive] = await Promise.all([
+    isModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT),
+    isModuleActive(session.tenantId, ModuleName.AI_ASSISTANT),
+  ])
   const stockItems = stockModuleActive
     ? await queryGetStockItemsBySite(session, intervention.siteId)
     : []
@@ -213,6 +218,13 @@ export default async function InterventionDetailPage({
             <p className="text-sm text-slate-800 whitespace-pre-wrap bg-slate-50 rounded p-3 border border-slate-100">{intervention.closingDiagnosis}</p>
           </div>
         )}
+
+        {/* Résumé IA — visible uniquement si clôturée et module AI actif */}
+        {intervention.status === "CLOSED" && aiModuleActive && (
+          <div className="flex justify-end">
+            <InterventionSummaryButton interventionId={intervention.id} />
+          </div>
+        )}
       </div>
 
       {/* Matériaux prévus — uniquement pour les préventives, si module stock actif */}
@@ -240,6 +252,13 @@ export default async function InterventionDetailPage({
           stockItems={stockItems}
           isReadOnly={isTerminal}
         />
+      )}
+
+      {/* Suggestion IA de pièces — visible si modules AI + Stock actifs et intervention non terminée */}
+      {aiModuleActive && stockModuleActive && !isTerminal && (
+        <div className="flex justify-end -mb-2">
+          <PartsSuggestionButton interventionId={intervention.id} />
+        </div>
       )}
 
       {/* Pièces hors prévision — pour les correctives, ou hors-liste sur préventives */}

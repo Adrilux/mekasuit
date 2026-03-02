@@ -1,3 +1,5 @@
+import Link from "next/link"
+import { TrendingUp } from "lucide-react"
 import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { isModuleActive } from "@/lib/modules/module-access-checker"
 import { ModuleName } from "@prisma/client"
@@ -20,5 +22,18 @@ export default async function AiAssistantPage() {
     )
   }
 
-  return <AiChatClient />
+  return (
+    <div>
+      <div className="flex gap-2 mb-4">
+        <Link
+          href="/ai-assistant/machines"
+          className="flex items-center gap-2 text-sm px-3 py-2 bg-white border border-slate-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors text-slate-700 hover:text-blue-700"
+        >
+          <TrendingUp className="w-4 h-4 text-blue-500" />
+          Analyse pannes récurrentes
+        </Link>
+      </div>
+      <AiChatClient />
+    </div>
+  )
 }

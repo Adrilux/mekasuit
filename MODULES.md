@@ -121,9 +121,9 @@ Gérer le référentiel des pièces et consommables.
 | Fonctionnalité | Description | Opérations |
 |---|---|---|
 | ✅ Génération description intervention | Générer automatiquement une description à partir de quelques mots-clés | Générer, accepter ou rejeter |
-| 🔲 Analyse pannes récurrentes | Analyser l'historique d'une machine, identifier les pannes répétitives, suggérer des actions préventives | Lancer analyse sur machine, voir rapport |
-| 🔲 Suggestion de pièces | À partir du diagnostic saisi, suggérer les pièces probablement nécessaires depuis le catalogue | Voir suggestions, ajouter à l'intervention |
-| 🔲 Résumé d'intervention | Générer un résumé professionnel d'une intervention clôturée pour archivage ou rapport client | Générer depuis fiche clôturée |
+| ✅ Analyse pannes récurrentes | Analyser l'historique d'une machine, identifier les pannes répétitives, tendances temporelles et recommandations préventives. Page dédiée /ai-assistant/machines | Sélectionner machine, lancer analyse, voir rapport structuré |
+| ✅ Suggestion de pièces | À partir du titre, description et diagnostic d'une intervention, suggérer les pièces du catalogue les plus probables. Requiert modules AI + Stock | Voir suggestions, ajouter directement au stock consommé |
+| ✅ Résumé d'intervention | Générer un résumé professionnel d'une intervention clôturée pour archivage ou rapport client | Générer depuis fiche clôturée, copier dans le presse-papier |
 
 ---
 
@@ -187,7 +187,7 @@ Gérer le référentiel des pièces et consommables.
 | GMAO | ✅ Obligatoire | Machines (fiche, notes, pièces jointes, timeline, statut, archivage/restauration, QR code régénérable, compteurs + déclenchement préventive, BOM), interventions (pièces jointes, pointage heures, checklists + modèles de checklist), préventives (récurrence, matériaux, chaîne, planning /planning, modèles d'intervention, déclenchement compteur) | Signature électronique, SLA |
 | Stock | ✅ Optionnel (dépend GMAO) | Catalogue (fiche, QR code étiquette, fournisseurs + délai réappro), mouvements (avec annulation), inventaire physique, consommation sur intervention, scan barcode, alertes rupture, transferts, commandes fournisseurs (BC workflow + réception partielle + ruptures) | — |
 | Rapports avancés | ✅ Optionnel | MTBF, charge technicien, coût maintenance, taux disponibilité, SLA, export PDF, rapports personnalisés | — |
-| Assistant IA | ✅ Optionnel | Génération description intervention | Analyse pannes, suggestion pièces, résumé clôture |
+| Assistant IA | ✅ Optionnel | Génération description intervention, analyse pannes récurrentes (/ai-assistant/machines), suggestion pièces (fiche intervention), résumé clôture | — |
 | Notifications | ✅ Inclus | In-app (6 types) | Email, récap planifié |
 | Administration | ✅ Inclus | Tenant, utilisateurs, rôles custom, organigramme, audit | Plan 2D site |
 | Export | 🔲 À créer | — | CSV interventions/stock, PDF rapport |
