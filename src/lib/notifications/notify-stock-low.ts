@@ -4,13 +4,19 @@
  */
 import { Prisma } from "@prisma/client"
 import { sendNotificationToMany } from "./notification-sender"
+import { sendEmail } from "@/lib/email/email-sender"
+import { buildStockLowEmail } from "@/lib/email/templates/email-stock-low"
+import { queryGetUsersByAuthIds } from "@/server/queries/users/query-get-users-by-auth-ids"
+import { serverEnv } from "@/lib/env/env-server-schema"
 
 type StockLowCheckInput = {
   tx: Prisma.TransactionClient
   tenantId: string
   stockItemId: string
   stockItemName: string
+  stockItemReference?: string
   siteId: string
+  siteName?: string
   newQuantity: number
   minimumLevel: number
 }
@@ -21,7 +27,7 @@ type StockLowCheckInput = {
  * tous les client_admin et workshop_manager du tenant.
  */
 export async function notifyIfStockLow(input: StockLowCheckInput): Promise<void> {
-  const { tx, tenantId, stockItemId, stockItemName, siteId, newQuantity, minimumLevel } = input
+  const { tx, tenantId, stockItemId, stockItemName, stockItemReference, siteId, siteName, newQuantity, minimumLevel } = input
 
   if (minimumLevel <= 0 || newQuantity > minimumLevel) return
 
@@ -58,4 +64,30 @@ export async function notifyIfStockLow(input: StockLowCheckInput): Promise<void>
     body: `${stockItemName} : ${newQuantity} unité(s) restante(s) (seuil : ${minimumLevel})`,
     link: `/stock/${stockItemId}`,
   })
+
+  // Emails aux managers — hors transaction, best-effort
+  void (async () => {
+    const users = await queryGetUsersByAuthIds(userIds)
+    const appUrl = serverEnv.BETTER_AUTH_URL
+
+    await Promise.all(
+      users.map((user) => {
+        if (!user.email) return Promise.resolve()
+        const html = buildStockLowEmail({
+          recipientName: user.name,
+          articleName: stockItemName,
+          articleReference: stockItemReference ?? stockItemId,
+          quantityOnHand: newQuantity,
+          minimumQuantity: minimumLevel,
+          siteName,
+          appUrl,
+        })
+        return sendEmail({
+          to: user.email,
+          subject: `⚠️ Stock bas : ${stockItemName} — ${newQuantity} restant(s)`,
+          html,
+        })
+      })
+    )
+  })()
 }

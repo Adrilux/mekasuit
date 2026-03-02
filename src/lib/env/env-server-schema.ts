@@ -23,6 +23,11 @@ const serverEnvSchema = z.object({
   // IA (Groq) — optionnel si le module AI n'est pas activé
   GROQ_API_KEY: z.string().startsWith("gsk_", "GROQ_API_KEY doit commencer par gsk_").optional(),
 
+  // Email (Resend) — optionnel, best-effort
+  RESEND_API_KEY: z.string().startsWith("re_").optional(),
+  EMAIL_FROM: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
+
   // Logs
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 

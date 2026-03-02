@@ -220,3 +220,20 @@
 | Suggestion de pièces | ✅ | `actionSuggestParts` — charge intervention + catalogue (50 articles), prompt demande refs exactes → match en JS. Composant `PartsSuggestionButton` sur fiche intervention (non terminée, modules AI+Stock actifs) → dialog avec suggestions + bouton "Ajouter" → `actionConsumeStockPart` |
 | Résumé d'intervention | ✅ | `actionGenerateInterventionSummary` — charge intervention CLOSED + technicien + notes + pièces, prompt résumé pro. Composant `InterventionSummaryButton` sur fiche intervention CLOSED → dialog avec résumé + bouton "Copier" |
 
+---
+
+## MODULE 5 — NOTIFICATIONS & EMAIL
+
+| Feature | Statut | Notes |
+|---|---|---|
+| Notifications in-app | ✅ | Existant — badge, centre notifs, 6 types |
+| Service email (Resend) | ✅ | `src/lib/email/email-sender.ts` — `sendEmail({ to, subject, html })`. Appelle Resend SDK si `RESEND_API_KEY` configuré, sinon log console. Never throws. |
+| Template : intervention assignée | ✅ | `src/lib/email/templates/email-intervention-assigned.ts` — Header slate, CTA bleu, priorité colorée |
+| Template : intervention en retard | ✅ | `src/lib/email/templates/email-intervention-overdue.ts` — Header rouge, CTA rouge. Inclut aussi `buildOverdueManagerSummaryEmail` (tableau multi-interventions) |
+| Template : stock bas | ✅ | `src/lib/email/templates/email-stock-low.ts` — Header amber, quantités actuelles vs seuil |
+| Email à l'assignation | ✅ | `action-assign-intervention.ts` — après notif in-app, fetch email via `queryGetUsersByAuthIds`, envoie email au technicien. Fire-and-forget (void async IIFE hors transaction) |
+| Email stock bas | ✅ | `notify-stock-low.ts` — après `sendNotificationToMany`, fetch emails des managers, envoie email à chacun. Fire-and-forget hors transaction. Signature étendue : `stockItemReference?`, `siteName?` |
+| Check interventions en retard | ✅ | `src/lib/notifications/notify-interventions-overdue.ts` — iterate tous les tenants actifs, `withTenantContext` par tenant, cherche OPEN/IN_PROGRESS/PENDING_PARTS avec `scheduledAt < now`. Dédup : vérifie notif INTERVENTION_OVERDUE dans les 24h. Notif in-app au technicien + managers. Email individuel au technicien + email récap groupé aux managers |
+| Route cron `/api/cron/check-overdue` | ✅ | `GET` sécurisé par `Authorization: Bearer CRON_SECRET`. Si pas de CRON_SECRET : passe sans auth (dev). Retourne `{ success: true, processed: N }` |
+| Variables d'environnement | ✅ | `RESEND_API_KEY` (re_*), `EMAIL_FROM`, `CRON_SECRET` — toutes optionnelles dans `env-server-schema.ts` et `.env.example` |
+

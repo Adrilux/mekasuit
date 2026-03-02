@@ -42,7 +42,7 @@ export async function actionConsumeStockPart(input: unknown) {
       // Vérifie le stock disponible
       const stockItem = await tx.stockItem.findUnique({
         where: { id: stockItemId },
-        select: { id: true, name: true, quantityOnHand: true, siteId: true, minimumLevel: true },
+        select: { id: true, name: true, reference: true, quantityOnHand: true, siteId: true, minimumLevel: true },
       })
 
       if (!stockItem) throw new NotFoundError("Pièce", stockItemId)
@@ -88,6 +88,7 @@ export async function actionConsumeStockPart(input: unknown) {
         tenantId: session.tenantId,
         stockItemId,
         stockItemName: stockItem.name,
+        stockItemReference: stockItem.reference,
         siteId: stockItem.siteId,
         newQuantity,
         minimumLevel: stockItem.minimumLevel,

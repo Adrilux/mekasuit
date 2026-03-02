@@ -132,7 +132,7 @@ Gérer le référentiel des pièces et consommables.
 | Fonctionnalité | Description | Opérations |
 |---|---|---|
 | ✅ Notification in-app | Badge + centre notifications. Types : intervention assignée, en retard, stock bas, préventive imminente, transfert en attente, transfert résolu | Lire, marquer comme lue |
-| 🔲 Email | Emails pour événements critiques (intervention assignée, en retard, stock bas). Template configurable | Configurer événements → email, modifier template |
+| ✅ Email événements critiques | Emails automatiques via Resend pour : intervention assignée (technicien), stock bas (managers), interventions en retard (technicien + récap managers). Best-effort (log si non configuré). Route cron `/api/cron/check-overdue` sécurisée par `CRON_SECRET` | Configurer RESEND_API_KEY + CRON_SECRET |
 | 🔲 Récap planifié | Résumé quotidien ou hebdomadaire par email : interventions du jour, stocks bas, préventives à venir | Configurer fréquence, destinataires |
 
 ---
@@ -188,6 +188,6 @@ Gérer le référentiel des pièces et consommables.
 | Stock | ✅ Optionnel (dépend GMAO) | Catalogue (fiche, QR code étiquette, fournisseurs + délai réappro), mouvements (avec annulation), inventaire physique, consommation sur intervention, scan barcode, alertes rupture, transferts, commandes fournisseurs (BC workflow + réception partielle + ruptures) | — |
 | Rapports avancés | ✅ Optionnel | MTBF, charge technicien, coût maintenance, taux disponibilité, SLA, export PDF, rapports personnalisés | — |
 | Assistant IA | ✅ Optionnel | Génération description intervention, analyse pannes récurrentes (/ai-assistant/machines), suggestion pièces (fiche intervention), résumé clôture | — |
-| Notifications | ✅ Inclus | In-app (6 types) | Email, récap planifié |
+| Notifications | ✅ Inclus | In-app (6 types) + Email événements (Resend, best-effort) | Récap planifié |
 | Administration | ✅ Inclus | Tenant, utilisateurs, rôles custom, organigramme, audit | Plan 2D site |
 | Export | 🔲 À créer | — | CSV interventions/stock, PDF rapport |
