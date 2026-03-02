@@ -10,6 +10,9 @@ import { prisma } from "@/lib/db/prisma-client-singleton"
 import { handleServerActionError, success } from "@/lib/errors/error-handler-server"
 import { ValidationError } from "@/lib/errors/app-error-classes"
 import { logger } from "@/lib/errors/error-logger"
+import { sendEmail } from "@/lib/email/email-sender"
+import { buildInviteUserEmail } from "@/lib/email/templates/email-invite-user"
+import { serverEnv } from "@/lib/env/env-server-schema"
 
 const schema = z.object({
   name: z.string().min(2, "Nom trop court").max(100),
@@ -114,12 +117,32 @@ export async function actionInviteUser(input: unknown) {
       accountCreated,
     })
 
+    // Envoi de l'email d'invitation si un nouveau compte a été créé — best-effort
     if (accountCreated && tempPassword) {
+      void (async () => {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: session.tenantId },
+          select: { name: true },
+        })
+        const html = buildInviteUserEmail({
+          recipientName: data.name,
+          recipientEmail: data.email,
+          tempPassword,
+          tenantName: tenant?.name ?? "votre organisation",
+          appUrl: serverEnv.BETTER_AUTH_URL,
+        })
+        await sendEmail({
+          to: data.email,
+          subject: `Invitation MekaSuite — ${tenant?.name ?? "votre organisation"}`,
+          html,
+        })
+      })()
+
       return success({
         status: "created" as const,
         email: data.email,
         tempPassword,
-        message: `Compte créé pour ${data.email}. Communiquez-lui le mot de passe temporaire.`,
+        message: `Compte créé pour ${data.email}. Les identifiants ont été envoyés par email.`,
       })
     }
 

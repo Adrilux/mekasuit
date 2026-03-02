@@ -17,6 +17,7 @@ import {
   SelectGroup,
 } from "@/components/ui/select"
 import { UserDeactivateButton } from "@/components/users/user-deactivate-button"
+import { UserReactivateButton } from "@/components/users/user-reactivate-button"
 import { actionUpdateUserRole } from "@/server/actions/users/action-update-user-role"
 import { actionUpdateUserInfo } from "@/server/actions/users/action-update-user-info"
 import type { UserRole } from "@prisma/client"
@@ -254,6 +255,9 @@ function EditableUserRow({
           )}
           {canDeactivate && !isCurrentUser && !isSuperAdmin && user.isActive && (
             <UserDeactivateButton tenantUserId={user.id} />
+          )}
+          {canDeactivate && !isCurrentUser && !isSuperAdmin && !user.isActive && (
+            <UserReactivateButton tenantUserId={user.id} />
           )}
         </div>
       </td>

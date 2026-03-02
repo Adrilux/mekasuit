@@ -253,3 +253,18 @@
 | Légende | ✅ | En bas du plan — couleurs statuts + badge alerte |
 | Schéma DB | ✅ | `Site.floorPlanImage String?` + `Site.machinePins Json?` — migration `20260302_add_site_floor_plan` |
 
+---
+
+### 6.2 Utilisateurs & rôles
+
+| Feature | Statut | Notes |
+|---|---|---|
+| Inviter utilisateur | ✅ | `action-invite-user.ts` — création compte Better Auth + mot de passe temporaire + `mustChangePassword: true`. Email d'invitation envoyé via Resend (best-effort) avec template `email-invite-user.ts` (identifiants + CTA login) |
+| Réinviter | ✅ | L'email est envoyé automatiquement lors de l'invitation. Si perdu, l'admin peut réinviter via le formulaire avec un nouvel email |
+| Désactiver utilisateur | ✅ | `action-deactivate-user.ts` — bouton `UserDeactivateButton`, dialog confirmation |
+| Réactiver utilisateur | ✅ | `action-reactivate-user.ts` (nouveau) — bouton `UserReactivateButton` (vert), visible si `!user.isActive`. Permission réutilisée : `user:deactivate` |
+| Gérer rôle | ✅ | Dropdown inline dans `UsersTable` — rôles système + custom (`custom:id`) |
+| Rôles custom | ✅ | CRUD dans `/settings/roles` — `roles-page-client.tsx`, permissions groupées par module |
+| Sites assignés | ✅ | Checkboxes inline dans `UsersTable` — au moins 1 site obligatoire |
+| Organigramme | ✅ | `/users/org` — arbre visual, édition poste + manager, couleurs par rôle |
+
