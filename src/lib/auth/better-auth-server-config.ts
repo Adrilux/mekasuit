@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth"
+import { createAuthMiddleware } from "better-auth/api"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import { prisma } from "@/lib/db/prisma-client-singleton"
 import { serverEnv } from "@/lib/env/env-server-schema"
@@ -39,6 +40,24 @@ export const auth = betterAuth({
         input: false, // non fourni à la création, assigné lors de l'onboarding
       },
     },
+  },
+
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      // À la connexion, supprimer toutes les sessions précédentes de l'utilisateur
+      // sauf la nouvelle — évite qu'un cookie d'un ancien tenant reste actif
+      if (ctx.path !== "/sign-in/email") return
+
+      const newSession = ctx.context.newSession
+      if (!newSession?.session?.userId) return
+
+      await prisma.session.deleteMany({
+        where: {
+          userId: newSession.session.userId,
+          id: { not: newSession.session.id },
+        },
+      })
+    }),
   },
 })
 
