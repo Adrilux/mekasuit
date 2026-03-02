@@ -164,7 +164,7 @@ Gérer le référentiel des pièces et consommables.
 | Fonctionnalité | Description | Opérations |
 |---|---|---|
 | ✅ Gérer sites | Créer et configurer les ateliers/usines (nom, adresse) | Créer, modifier, désactiver |
-| 🔲 Plan 2D du site | Carte visuelle de l'atelier. Positionner les machines sur le plan. Voir statut machine en temps réel | Créer plan (upload image), placer machine, modifier position, voir alertes sur plan |
+| ✅ Plan 2D du site | Carte visuelle de l'atelier. Upload image PNG/JPG/WebP. Placer les machines par drag & drop. Marqueurs colorés par statut, badge interventions ouvertes, clic → fiche machine. Route `/sites/[siteId]/plan` | Upload image, drag & drop machines, enregistrer positions |
 
 ---
 
@@ -189,5 +189,5 @@ Gérer le référentiel des pièces et consommables.
 | Rapports avancés | ✅ Optionnel | MTBF, charge technicien, coût maintenance, taux disponibilité, SLA, export PDF, rapports personnalisés | — |
 | Assistant IA | ✅ Optionnel | Génération description intervention, analyse pannes récurrentes (/ai-assistant/machines), suggestion pièces (fiche intervention), résumé clôture | — |
 | Notifications | ✅ Inclus | In-app (6 types) + Email événements (Resend, best-effort) | Récap planifié |
-| Administration | ✅ Inclus | Tenant, utilisateurs, rôles custom, organigramme, audit | Plan 2D site |
+| Administration | ✅ Inclus | Tenant, utilisateurs, rôles custom, organigramme, audit, Plan 2D site | — |
 | Export | 🔲 À créer | — | CSV interventions/stock, PDF rapport |

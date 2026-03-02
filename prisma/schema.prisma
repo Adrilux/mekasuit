@@ -137,11 +137,13 @@ model Site {
   id        String   @id @default(cuid())
   tenantId  String   // clé de partition RLS
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name      String
-  address   String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  name            String
+  address         String?
+  isActive        Boolean  @default(true)
+  floorPlanImage  String?  // nom du fichier image du plan (stocké dans public/uploads/sites/[id]/)
+  machinePins     Json?    // { [machineId]: { x: number, y: number } } — coordonnées en % relatif
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   machines           Machine[]
   userSites          UserSite[]

@@ -59,13 +59,17 @@ export default async function SitesPage() {
                 )}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Link href={`/machines?siteId=${site.id}`} className="text-xs text-blue-600 hover:underline">
                   Machines
                 </Link>
                 <span className="text-slate-300">·</span>
                 <Link href={`/interventions?siteId=${site.id}`} className="text-xs text-blue-600 hover:underline">
                   Interventions
+                </Link>
+                <span className="text-slate-300">·</span>
+                <Link href={`/sites/${site.id}/plan`} className="text-xs text-blue-600 hover:underline">
+                  Plan 2D
                 </Link>
                 {can(session.role, "site:update") && (
                   <>

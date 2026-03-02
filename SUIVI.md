@@ -237,3 +237,19 @@
 | Route cron `/api/cron/check-overdue` | ✅ | `GET` sécurisé par `Authorization: Bearer CRON_SECRET`. Si pas de CRON_SECRET : passe sans auth (dev). Retourne `{ success: true, processed: N }` |
 | Variables d'environnement | ✅ | `RESEND_API_KEY` (re_*), `EMAIL_FROM`, `CRON_SECRET` — toutes optionnelles dans `env-server-schema.ts` et `.env.example` |
 
+---
+
+## MODULE 6 — ADMINISTRATION
+
+### 6.3 Plan 2D du site
+
+| Feature | Statut | Notes |
+|---|---|---|
+| Upload image plan | ✅ | `POST /api/sites/[siteId]/floor-plan` — PNG/JPG/WebP max 5 Mo, stocké dans `public/uploads/sites/[siteId]/`. Remplace l'ancien fichier. Permission `site:update` |
+| Sauvegarde positions | ✅ | `PATCH /api/sites/[siteId]/pins` — Body `{ pins: { [machineId]: { x, y } } }`. Stocké en `Json?` sur le modèle Site. Permission `site:update` |
+| Page plan | ✅ | `/sites/[siteId]/plan` — server component, charge site + machines non-décommissionnées du site. Lien "Plan 2D" sur chaque carte dans `/sites` |
+| Marqueurs machines | ✅ | Couleur par statut (vert/amber/gray). Badge rouge si interventions ouvertes > 0. Tooltip natif (title). Clic → `/machines/[id]` |
+| Drag & drop | ✅ | Natif (pas de lib). `onMouseDown` sur marqueur → `onMouseMove` sur conteneur → coordonnées en % relatif. Bouton "+" pour placer les machines non positionnées (place à 50%, 50%) |
+| Légende | ✅ | En bas du plan — couleurs statuts + badge alerte |
+| Schéma DB | ✅ | `Site.floorPlanImage String?` + `Site.machinePins Json?` — migration `20260302_add_site_floor_plan` |
+
