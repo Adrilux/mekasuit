@@ -26,7 +26,7 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | 
 
 export default async function PurchaseOrdersPage() {
   const session = await requireSession()
-  assertCan(session.role, "stock:po:create")
+  assertCan(session.role, "stock:read")
   await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
   const siteId = session.siteIds[0] ?? ""
