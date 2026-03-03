@@ -1,0 +1,20 @@
+Tenant "MekaSuite Demo" créé avec succès
+Identifiants utilisateurs
+Rôle	Email	Mot de passe
+client_admin	admin@demo.mekasuite.fr	Demo@Admin2024
+workshop_manager	chef@demo.mekasuite.fr	Demo@Chef2024
+technician (hydraulique)	tech1@demo.mekasuite.fr	Demo@Tech12024
+technician (électromec.)	tech2@demo.mekasuite.fr	Demo@Tech22024
+reader	lecture@demo.mekasuite.fr	Demo@Reader2024
+Données injectées (3 mois d'historique)
+2 sites : Atelier A — Production / Atelier B — Maintenance
+8 machines : presse hydraulique, tour CNC, fraiseuse (en maintenance), compresseur, convoyeur, ponceuse, poste soudure, perceuse
+4 fournisseurs : roulements, lubrifiants, électronique, pneumatique (avec liens articles)
+14 articles de stock avec mouvements (entrées initiales, sorties consommation, réceptions)
+3 commandes fournisseurs : une reçue (BC1), une commandée (BC2 — vérin fraiseuse), un brouillon (BC3)
+16 interventions dont :
+8 préventives clôturées (vidanges mensuelles avec chaîne de récurrence, graissages, inspection sécurité)
+5 correctives clôturées (panne roulement CNC, fuite joint, courroie cassée, soudure, broche)
+3 en cours/ouvertes (fraiseuse PENDING_PARTS, alarme compresseur OPEN, bruit convoyeur PENDING_PARTS)
+Notes, pièces consommées et diagnostics de clôture sur les interventions
+Le script scripts/seed-test-tenant.ts est idempotent — vous pouvez le relancer sans dupliquer les données.

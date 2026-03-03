@@ -1,0 +1,744 @@
+CREATE SCHEMA "public";
+CREATE SCHEMA "neon_auth";
+CREATE TYPE "ModuleName" AS ENUM('GMAO', 'STOCK_MANAGEMENT', 'AI_ASSISTANT', 'ADVANCED_REPORTS', 'INTER_SITE_TRANSFERS');
+CREATE TYPE "UserRole" AS ENUM('super_admin', 'client_admin', 'workshop_manager', 'technician', 'reader');
+CREATE TYPE "MachineStatus" AS ENUM('OPERATIONAL', 'UNDER_MAINTENANCE', 'DECOMMISSIONED');
+CREATE TYPE "RecurrenceType" AS ENUM('WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'SEMIANNUAL', 'ANNUAL', 'CUSTOM');
+CREATE TYPE "InterventionType" AS ENUM('PREVENTIVE', 'CORRECTIVE', 'PREDICTIVE', 'INSPECTION');
+CREATE TYPE "InterventionPriority" AS ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
+CREATE TYPE "InterventionStatus" AS ENUM('OPEN', 'IN_PROGRESS', 'PENDING_PARTS', 'CLOSED', 'CANCELLED');
+CREATE TYPE "MovementType" AS ENUM('IN', 'OUT', 'TRANSFER_IN', 'TRANSFER_OUT', 'ADJUSTMENT');
+CREATE TYPE "TransferStatus" AS ENUM('PENDING', 'APPROVED', 'REJECTED', 'COMPLETED');
+CREATE TYPE "NotificationType" AS ENUM('INTERVENTION_ASSIGNED', 'INTERVENTION_OVERDUE', 'STOCK_LOW', 'PREVENTIVE_DUE', 'TRANSFER_PENDING', 'TRANSFER_RESOLVED');
+CREATE TYPE "StockInventoryStatus" AS ENUM('OPEN', 'CLOSED');
+CREATE TYPE "PurchaseOrderStatus" AS ENUM('DRAFT', 'ORDERED', 'RECEIVED', 'CANCELLED');
+CREATE TABLE "_prisma_migrations" (
+	"id" varchar(36) PRIMARY KEY,
+	"checksum" varchar(64) NOT NULL,
+	"finished_at" timestamp with time zone,
+	"migration_name" varchar(255) NOT NULL,
+	"logs" text,
+	"rolled_back_at" timestamp with time zone,
+	"started_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"applied_steps_count" integer DEFAULT 0 NOT NULL
+);
+CREATE TABLE "account" (
+	"id" text PRIMARY KEY,
+	"accountId" text NOT NULL,
+	"providerId" text NOT NULL,
+	"userId" text NOT NULL,
+	"accessToken" text,
+	"refreshToken" text,
+	"idToken" text,
+	"accessTokenExpiresAt" timestamp,
+	"refreshTokenExpiresAt" timestamp,
+	"scope" text,
+	"password" text,
+	"createdAt" timestamp NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+CREATE TABLE "audit_logs" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"userId" text NOT NULL,
+	"action" text NOT NULL,
+	"entityType" text NOT NULL,
+	"entityId" text NOT NULL,
+	"entityLabel" text NOT NULL,
+	"changes" jsonb,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "audit_logs" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "checklist_template_items" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"templateId" text NOT NULL,
+	"label" text NOT NULL,
+	"isRequired" boolean DEFAULT false NOT NULL,
+	"position" integer DEFAULT 0 NOT NULL
+);
+ALTER TABLE "checklist_template_items" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "checklist_templates" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"name" text NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+ALTER TABLE "checklist_templates" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "custom_reports" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"createdBy" text NOT NULL,
+	"name" text NOT NULL,
+	"columns" text[],
+	"filters" jsonb NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+ALTER TABLE "custom_reports" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "intervention_attachments" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"interventionId" text NOT NULL,
+	"fileName" text NOT NULL,
+	"storedName" text NOT NULL,
+	"mimeType" text NOT NULL,
+	"sizeBytes" integer NOT NULL,
+	"uploadedBy" text NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "intervention_attachments" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "intervention_checklist_items" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"checklistId" text NOT NULL,
+	"label" text NOT NULL,
+	"isRequired" boolean DEFAULT false NOT NULL,
+	"isChecked" boolean DEFAULT false NOT NULL,
+	"checkedAt" timestamp,
+	"checkedBy" text,
+	"position" integer DEFAULT 0 NOT NULL
+);
+ALTER TABLE "intervention_checklist_items" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "intervention_checklists" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"interventionId" text NOT NULL,
+	"name" text NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "intervention_checklists" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "intervention_notes" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"interventionId" text NOT NULL,
+	"authorUserId" text NOT NULL,
+	"content" text NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "intervention_notes" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "intervention_parts_used" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"interventionId" text NOT NULL,
+	"stockItemId" text NOT NULL,
+	"quantity" integer NOT NULL,
+	"usedAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "intervention_parts_used" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "intervention_planned_materials" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"interventionId" text NOT NULL,
+	"stockItemId" text NOT NULL,
+	"quantityPlanned" integer DEFAULT 1 NOT NULL,
+	"note" text,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "intervention_planned_materials" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "intervention_template_checklist_items" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"templateId" text NOT NULL,
+	"label" text NOT NULL,
+	"isRequired" boolean DEFAULT false NOT NULL,
+	"position" integer DEFAULT 0 NOT NULL
+);
+ALTER TABLE "intervention_template_checklist_items" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "intervention_templates" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"name" text NOT NULL,
+	"description" text,
+	"type" InterventionType DEFAULT 'PREVENTIVE' NOT NULL,
+	"priority" InterventionPriority DEFAULT 'MEDIUM' NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+ALTER TABLE "intervention_templates" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "intervention_time_entries" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"interventionId" text NOT NULL,
+	"userId" text NOT NULL,
+	"startedAt" timestamp NOT NULL,
+	"endedAt" timestamp,
+	"durationMinutes" integer,
+	"note" text,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+ALTER TABLE "intervention_time_entries" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "interventions" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"siteId" text NOT NULL,
+	"machineId" text,
+	"assignedUserId" text,
+	"title" text NOT NULL,
+	"description" text,
+	"type" InterventionType NOT NULL,
+	"priority" InterventionPriority DEFAULT 'MEDIUM' NOT NULL,
+	"status" InterventionStatus DEFAULT 'OPEN' NOT NULL,
+	"scheduledAt" timestamp,
+	"startedAt" timestamp,
+	"closedAt" timestamp,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL,
+	"recurrenceType" RecurrenceType,
+	"recurrenceIntervalDays" integer,
+	"parentInterventionId" text,
+	"actualDurationMinutes" integer,
+	"closingDiagnosis" text,
+	"recurrenceEndsAt" timestamp
+);
+ALTER TABLE "interventions" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "licenses" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"maxSites" integer DEFAULT 1 NOT NULL,
+	"maxUsers" integer DEFAULT 5 NOT NULL,
+	"billingPeriod" text DEFAULT 'monthly' NOT NULL,
+	"renewsAt" timestamp NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+CREATE TABLE "machine_attachments" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"machineId" text NOT NULL,
+	"fileName" text NOT NULL,
+	"storedName" text NOT NULL,
+	"mimeType" text NOT NULL,
+	"sizeBytes" integer NOT NULL,
+	"uploadedBy" text NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "machine_attachments" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "machine_components" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"machineId" text NOT NULL,
+	"parentId" text,
+	"name" text NOT NULL,
+	"description" text,
+	"quantity" integer DEFAULT 1 NOT NULL,
+	"stockItemId" text,
+	"position" integer DEFAULT 0 NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+ALTER TABLE "machine_components" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "machine_counter_readings" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"counterId" text NOT NULL,
+	"value" double precision NOT NULL,
+	"recordedAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"recordedBy" text NOT NULL,
+	"note" text
+);
+ALTER TABLE "machine_counter_readings" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "machine_counters" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"machineId" text NOT NULL,
+	"name" text NOT NULL,
+	"unit" text NOT NULL,
+	"currentValue" double precision DEFAULT 0 NOT NULL,
+	"thresholdValue" double precision,
+	"thresholdInterval" double precision,
+	"triggerTitle" text,
+	"triggerDescription" text,
+	"triggerPriority" text,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+ALTER TABLE "machine_counters" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "machines" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"siteId" text NOT NULL,
+	"name" text NOT NULL,
+	"serialNumber" text,
+	"category" text,
+	"manufacturer" text,
+	"model" text,
+	"status" MachineStatus DEFAULT 'OPERATIONAL' NOT NULL,
+	"qrCodeSlug" text NOT NULL,
+	"installedAt" timestamp,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL,
+	"notes" text
+);
+ALTER TABLE "machines" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "notifications" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"userId" text NOT NULL,
+	"type" NotificationType NOT NULL,
+	"title" text NOT NULL,
+	"body" text NOT NULL,
+	"link" text,
+	"readAt" timestamp,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "notifications" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "purchase_order_items" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"purchaseOrderId" text NOT NULL,
+	"stockItemId" text NOT NULL,
+	"quantityOrdered" integer NOT NULL,
+	"unitPriceCents" integer DEFAULT 0 NOT NULL,
+	"quantityReceived" integer DEFAULT 0 NOT NULL
+);
+ALTER TABLE "purchase_order_items" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "purchase_orders" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"siteId" text NOT NULL,
+	"supplierId" text NOT NULL,
+	"status" PurchaseOrderStatus DEFAULT 'DRAFT' NOT NULL,
+	"expectedDeliveryDate" timestamp,
+	"notes" text,
+	"createdBy" text NOT NULL,
+	"approvedBy" text,
+	"approvedAt" timestamp,
+	"receivedAt" timestamp,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+ALTER TABLE "purchase_orders" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "session" (
+	"id" text PRIMARY KEY,
+	"expiresAt" timestamp NOT NULL,
+	"token" text NOT NULL,
+	"createdAt" timestamp NOT NULL,
+	"updatedAt" timestamp NOT NULL,
+	"ipAddress" text,
+	"userAgent" text,
+	"userId" text NOT NULL
+);
+CREATE TABLE "sites" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"name" text NOT NULL,
+	"address" text,
+	"isActive" boolean DEFAULT true NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL,
+	"floorPlanImage" text,
+	"machinePins" jsonb
+);
+ALTER TABLE "sites" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "stock_inventory_items" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"sessionId" text NOT NULL,
+	"stockItemId" text NOT NULL,
+	"systemQuantity" integer NOT NULL,
+	"countedQuantity" integer,
+	"note" text
+);
+ALTER TABLE "stock_inventory_items" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "stock_inventory_sessions" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"siteId" text NOT NULL,
+	"status" StockInventoryStatus DEFAULT 'OPEN' NOT NULL,
+	"createdBy" text NOT NULL,
+	"closedAt" timestamp,
+	"closedBy" text,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "stock_inventory_sessions" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "stock_item_suppliers" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"stockItemId" text NOT NULL,
+	"supplierId" text NOT NULL,
+	"supplierReference" text,
+	"purchasePriceCents" integer DEFAULT 0 NOT NULL,
+	"leadTimeDays" integer
+);
+ALTER TABLE "stock_item_suppliers" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "stock_items" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"siteId" text NOT NULL,
+	"reference" text NOT NULL,
+	"name" text NOT NULL,
+	"unit" text DEFAULT 'pièce' NOT NULL,
+	"quantityOnHand" integer DEFAULT 0 NOT NULL,
+	"minimumLevel" integer DEFAULT 0 NOT NULL,
+	"unitCostCents" integer DEFAULT 0 NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL,
+	"machineId" text
+);
+ALTER TABLE "stock_items" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "stock_movements" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"stockItemId" text NOT NULL,
+	"type" MovementType NOT NULL,
+	"quantity" integer NOT NULL,
+	"reason" text,
+	"operatorId" text NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"cancelledAt" timestamp,
+	"cancelledBy" text,
+	"cancelReason" text
+);
+ALTER TABLE "stock_movements" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "stock_transfer_requests" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"fromSiteId" text NOT NULL,
+	"toSiteId" text NOT NULL,
+	"stockItemId" text NOT NULL,
+	"quantity" integer NOT NULL,
+	"status" TransferStatus DEFAULT 'PENDING' NOT NULL,
+	"requestedById" text NOT NULL,
+	"approvedById" text,
+	"reason" text,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"resolvedAt" timestamp
+);
+ALTER TABLE "stock_transfer_requests" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "suppliers" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"name" text NOT NULL,
+	"email" text,
+	"phone" text
+);
+ALTER TABLE "suppliers" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "tenant_modules" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"module" ModuleName NOT NULL,
+	"isActive" boolean DEFAULT false NOT NULL,
+	"activatedAt" timestamp
+);
+CREATE TABLE "tenant_roles" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"name" text NOT NULL,
+	"permissions" text[],
+	"isSystem" boolean DEFAULT false NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+ALTER TABLE "tenant_roles" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "tenant_users" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"authUserId" text NOT NULL,
+	"role" UserRole NOT NULL,
+	"isActive" boolean DEFAULT true NOT NULL,
+	"joinedAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL,
+	"tenantRoleId" text,
+	"jobTitle" text,
+	"managerId" text
+);
+ALTER TABLE "tenant_users" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "tenants" (
+	"id" text PRIMARY KEY,
+	"name" text NOT NULL,
+	"slug" text NOT NULL,
+	"isActive" boolean DEFAULT true NOT NULL,
+	"createdAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+CREATE TABLE "user" (
+	"id" text PRIMARY KEY,
+	"name" text NOT NULL,
+	"email" text NOT NULL,
+	"emailVerified" boolean NOT NULL,
+	"image" text,
+	"createdAt" timestamp NOT NULL,
+	"updatedAt" timestamp NOT NULL,
+	"tenantId" text,
+	"mustChangePassword" boolean DEFAULT false NOT NULL
+);
+CREATE TABLE "user_sites" (
+	"id" text PRIMARY KEY,
+	"tenantId" text NOT NULL,
+	"tenantUserId" text NOT NULL,
+	"siteId" text NOT NULL,
+	"assignedAt" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+ALTER TABLE "user_sites" ENABLE ROW LEVEL SECURITY;
+CREATE TABLE "verification" (
+	"id" text PRIMARY KEY,
+	"identifier" text NOT NULL,
+	"value" text NOT NULL,
+	"expiresAt" timestamp NOT NULL,
+	"createdAt" timestamp,
+	"updatedAt" timestamp
+);
+CREATE TABLE "neon_auth"."account" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"accountId" text NOT NULL,
+	"providerId" text NOT NULL,
+	"userId" uuid NOT NULL,
+	"accessToken" text,
+	"refreshToken" text,
+	"idToken" text,
+	"accessTokenExpiresAt" timestamp with time zone,
+	"refreshTokenExpiresAt" timestamp with time zone,
+	"scope" text,
+	"password" text,
+	"createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp with time zone NOT NULL
+);
+CREATE TABLE "neon_auth"."invitation" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"organizationId" uuid NOT NULL,
+	"email" text NOT NULL,
+	"role" text,
+	"status" text NOT NULL,
+	"expiresAt" timestamp with time zone NOT NULL,
+	"createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"inviterId" uuid NOT NULL
+);
+CREATE TABLE "neon_auth"."jwks" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"publicKey" text NOT NULL,
+	"privateKey" text NOT NULL,
+	"createdAt" timestamp with time zone NOT NULL,
+	"expiresAt" timestamp with time zone
+);
+CREATE TABLE "neon_auth"."member" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"organizationId" uuid NOT NULL,
+	"userId" uuid NOT NULL,
+	"role" text NOT NULL,
+	"createdAt" timestamp with time zone NOT NULL
+);
+CREATE TABLE "neon_auth"."organization" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"name" text NOT NULL,
+	"slug" text NOT NULL CONSTRAINT "organization_slug_key" UNIQUE,
+	"logo" text,
+	"createdAt" timestamp with time zone NOT NULL,
+	"metadata" text
+);
+CREATE TABLE "neon_auth"."project_config" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"name" text NOT NULL,
+	"endpoint_id" text NOT NULL CONSTRAINT "project_config_endpoint_id_key" UNIQUE,
+	"created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"trusted_origins" jsonb NOT NULL,
+	"social_providers" jsonb NOT NULL,
+	"email_provider" jsonb,
+	"email_and_password" jsonb,
+	"allow_localhost" boolean NOT NULL,
+	"plugin_configs" jsonb,
+	"webhook_config" jsonb
+);
+CREATE TABLE "neon_auth"."session" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"expiresAt" timestamp with time zone NOT NULL,
+	"token" text NOT NULL CONSTRAINT "session_token_key" UNIQUE,
+	"createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp with time zone NOT NULL,
+	"ipAddress" text,
+	"userAgent" text,
+	"userId" uuid NOT NULL,
+	"impersonatedBy" text,
+	"activeOrganizationId" text
+);
+CREATE TABLE "neon_auth"."user" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"name" text NOT NULL,
+	"email" text NOT NULL CONSTRAINT "user_email_key" UNIQUE,
+	"emailVerified" boolean NOT NULL,
+	"image" text,
+	"createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"role" text,
+	"banned" boolean,
+	"banReason" text,
+	"banExpires" timestamp with time zone
+);
+CREATE TABLE "neon_auth"."verification" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"identifier" text NOT NULL,
+	"value" text NOT NULL,
+	"expiresAt" timestamp with time zone NOT NULL,
+	"createdAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+CREATE UNIQUE INDEX "_prisma_migrations_pkey" ON "_prisma_migrations" ("id");
+CREATE UNIQUE INDEX "account_pkey" ON "account" ("id");
+CREATE UNIQUE INDEX "audit_logs_pkey" ON "audit_logs" ("id");
+CREATE INDEX "audit_logs_tenantId_entityType_entityId_idx" ON "audit_logs" ("tenantId","entityType","entityId");
+CREATE INDEX "audit_logs_tenantId_idx" ON "audit_logs" ("tenantId");
+CREATE INDEX "audit_logs_tenantId_userId_idx" ON "audit_logs" ("tenantId","userId");
+CREATE UNIQUE INDEX "checklist_template_items_pkey" ON "checklist_template_items" ("id");
+CREATE INDEX "checklist_template_items_tenantId_templateId_idx" ON "checklist_template_items" ("tenantId","templateId");
+CREATE UNIQUE INDEX "checklist_templates_pkey" ON "checklist_templates" ("id");
+CREATE INDEX "checklist_templates_tenantId_idx" ON "checklist_templates" ("tenantId");
+CREATE UNIQUE INDEX "custom_reports_pkey" ON "custom_reports" ("id");
+CREATE INDEX "custom_reports_tenantId_idx" ON "custom_reports" ("tenantId");
+CREATE UNIQUE INDEX "intervention_attachments_pkey" ON "intervention_attachments" ("id");
+CREATE INDEX "intervention_attachments_tenantId_interventionId_idx" ON "intervention_attachments" ("tenantId","interventionId");
+CREATE UNIQUE INDEX "intervention_checklist_items_pkey" ON "intervention_checklist_items" ("id");
+CREATE INDEX "intervention_checklist_items_tenantId_checklistId_idx" ON "intervention_checklist_items" ("tenantId","checklistId");
+CREATE UNIQUE INDEX "intervention_checklists_pkey" ON "intervention_checklists" ("id");
+CREATE INDEX "intervention_checklists_tenantId_interventionId_idx" ON "intervention_checklists" ("tenantId","interventionId");
+CREATE UNIQUE INDEX "intervention_notes_pkey" ON "intervention_notes" ("id");
+CREATE INDEX "intervention_notes_tenantId_idx" ON "intervention_notes" ("tenantId");
+CREATE UNIQUE INDEX "intervention_parts_used_pkey" ON "intervention_parts_used" ("id");
+CREATE INDEX "intervention_parts_used_tenantId_idx" ON "intervention_parts_used" ("tenantId");
+CREATE UNIQUE INDEX "intervention_planned_materials_interventionId_stockItemId_key" ON "intervention_planned_materials" ("interventionId","stockItemId");
+CREATE UNIQUE INDEX "intervention_planned_materials_pkey" ON "intervention_planned_materials" ("id");
+CREATE INDEX "intervention_planned_materials_tenantId_idx" ON "intervention_planned_materials" ("tenantId");
+CREATE UNIQUE INDEX "intervention_template_checklist_items_pkey" ON "intervention_template_checklist_items" ("id");
+CREATE INDEX "intervention_template_checklist_items_tenantId_templateId_idx" ON "intervention_template_checklist_items" ("tenantId","templateId");
+CREATE UNIQUE INDEX "intervention_templates_pkey" ON "intervention_templates" ("id");
+CREATE INDEX "intervention_templates_tenantId_idx" ON "intervention_templates" ("tenantId");
+CREATE UNIQUE INDEX "intervention_time_entries_pkey" ON "intervention_time_entries" ("id");
+CREATE INDEX "intervention_time_entries_tenantId_interventionId_idx" ON "intervention_time_entries" ("tenantId","interventionId");
+CREATE UNIQUE INDEX "interventions_pkey" ON "interventions" ("id");
+CREATE INDEX "interventions_tenantId_assignedUserId_idx" ON "interventions" ("tenantId","assignedUserId");
+CREATE INDEX "interventions_tenantId_siteId_idx" ON "interventions" ("tenantId","siteId");
+CREATE INDEX "interventions_tenantId_status_idx" ON "interventions" ("tenantId","status");
+CREATE UNIQUE INDEX "licenses_pkey" ON "licenses" ("id");
+CREATE UNIQUE INDEX "licenses_tenantId_key" ON "licenses" ("tenantId");
+CREATE UNIQUE INDEX "machine_attachments_pkey" ON "machine_attachments" ("id");
+CREATE INDEX "machine_attachments_tenantId_machineId_idx" ON "machine_attachments" ("tenantId","machineId");
+CREATE INDEX "machine_components_parentId_idx" ON "machine_components" ("parentId");
+CREATE UNIQUE INDEX "machine_components_pkey" ON "machine_components" ("id");
+CREATE INDEX "machine_components_tenantId_machineId_idx" ON "machine_components" ("tenantId","machineId");
+CREATE UNIQUE INDEX "machine_counter_readings_pkey" ON "machine_counter_readings" ("id");
+CREATE INDEX "machine_counter_readings_tenantId_counterId_idx" ON "machine_counter_readings" ("tenantId","counterId");
+CREATE UNIQUE INDEX "machine_counters_pkey" ON "machine_counters" ("id");
+CREATE INDEX "machine_counters_tenantId_machineId_idx" ON "machine_counters" ("tenantId","machineId");
+CREATE UNIQUE INDEX "machines_pkey" ON "machines" ("id");
+CREATE UNIQUE INDEX "machines_qrCodeSlug_key" ON "machines" ("qrCodeSlug");
+CREATE INDEX "machines_tenantId_siteId_idx" ON "machines" ("tenantId","siteId");
+CREATE UNIQUE INDEX "notifications_pkey" ON "notifications" ("id");
+CREATE INDEX "notifications_tenantId_userId_idx" ON "notifications" ("tenantId","userId");
+CREATE INDEX "notifications_tenantId_userId_readAt_idx" ON "notifications" ("tenantId","userId","readAt");
+CREATE UNIQUE INDEX "purchase_order_items_pkey" ON "purchase_order_items" ("id");
+CREATE UNIQUE INDEX "purchase_order_items_purchaseOrderId_stockItemId_key" ON "purchase_order_items" ("purchaseOrderId","stockItemId");
+CREATE INDEX "purchase_order_items_tenantId_purchaseOrderId_idx" ON "purchase_order_items" ("tenantId","purchaseOrderId");
+CREATE UNIQUE INDEX "purchase_orders_pkey" ON "purchase_orders" ("id");
+CREATE INDEX "purchase_orders_tenantId_siteId_idx" ON "purchase_orders" ("tenantId","siteId");
+CREATE UNIQUE INDEX "session_pkey" ON "session" ("id");
+CREATE UNIQUE INDEX "session_token_key" ON "session" ("token");
+CREATE UNIQUE INDEX "sites_pkey" ON "sites" ("id");
+CREATE INDEX "sites_tenantId_idx" ON "sites" ("tenantId");
+CREATE UNIQUE INDEX "stock_inventory_items_pkey" ON "stock_inventory_items" ("id");
+CREATE UNIQUE INDEX "stock_inventory_items_sessionId_stockItemId_key" ON "stock_inventory_items" ("sessionId","stockItemId");
+CREATE INDEX "stock_inventory_items_tenantId_sessionId_idx" ON "stock_inventory_items" ("tenantId","sessionId");
+CREATE UNIQUE INDEX "stock_inventory_sessions_pkey" ON "stock_inventory_sessions" ("id");
+CREATE INDEX "stock_inventory_sessions_tenantId_siteId_idx" ON "stock_inventory_sessions" ("tenantId","siteId");
+CREATE UNIQUE INDEX "stock_item_suppliers_pkey" ON "stock_item_suppliers" ("id");
+CREATE UNIQUE INDEX "stock_item_suppliers_stockItemId_supplierId_key" ON "stock_item_suppliers" ("stockItemId","supplierId");
+CREATE INDEX "stock_item_suppliers_tenantId_stockItemId_idx" ON "stock_item_suppliers" ("tenantId","stockItemId");
+CREATE UNIQUE INDEX "stock_items_pkey" ON "stock_items" ("id");
+CREATE INDEX "stock_items_tenantId_siteId_idx" ON "stock_items" ("tenantId","siteId");
+CREATE UNIQUE INDEX "stock_items_tenantId_siteId_reference_key" ON "stock_items" ("tenantId","siteId","reference");
+CREATE UNIQUE INDEX "stock_movements_pkey" ON "stock_movements" ("id");
+CREATE INDEX "stock_movements_tenantId_stockItemId_idx" ON "stock_movements" ("tenantId","stockItemId");
+CREATE UNIQUE INDEX "stock_transfer_requests_pkey" ON "stock_transfer_requests" ("id");
+CREATE INDEX "stock_transfer_requests_tenantId_fromSiteId_idx" ON "stock_transfer_requests" ("tenantId","fromSiteId");
+CREATE INDEX "stock_transfer_requests_tenantId_idx" ON "stock_transfer_requests" ("tenantId");
+CREATE UNIQUE INDEX "suppliers_pkey" ON "suppliers" ("id");
+CREATE INDEX "suppliers_tenantId_idx" ON "suppliers" ("tenantId");
+CREATE UNIQUE INDEX "tenant_modules_pkey" ON "tenant_modules" ("id");
+CREATE UNIQUE INDEX "tenant_modules_tenantId_module_key" ON "tenant_modules" ("tenantId","module");
+CREATE UNIQUE INDEX "tenant_roles_pkey" ON "tenant_roles" ("id");
+CREATE INDEX "tenant_roles_tenantId_idx" ON "tenant_roles" ("tenantId");
+CREATE UNIQUE INDEX "tenant_roles_tenantId_name_key" ON "tenant_roles" ("tenantId","name");
+CREATE UNIQUE INDEX "tenant_users_authUserId_key" ON "tenant_users" ("authUserId");
+CREATE UNIQUE INDEX "tenant_users_pkey" ON "tenant_users" ("id");
+CREATE INDEX "tenant_users_tenantId_idx" ON "tenant_users" ("tenantId");
+CREATE UNIQUE INDEX "tenants_pkey" ON "tenants" ("id");
+CREATE UNIQUE INDEX "tenants_slug_key" ON "tenants" ("slug");
+CREATE UNIQUE INDEX "user_email_key" ON "user" ("email");
+CREATE UNIQUE INDEX "user_pkey" ON "user" ("id");
+CREATE UNIQUE INDEX "user_sites_pkey" ON "user_sites" ("id");
+CREATE INDEX "user_sites_tenantId_idx" ON "user_sites" ("tenantId");
+CREATE UNIQUE INDEX "user_sites_tenantUserId_siteId_key" ON "user_sites" ("tenantUserId","siteId");
+CREATE UNIQUE INDEX "verification_pkey" ON "verification" ("id");
+CREATE UNIQUE INDEX "account_pkey" ON "neon_auth"."account" ("id");
+CREATE INDEX "account_userId_idx" ON "neon_auth"."account" ("userId");
+CREATE INDEX "invitation_email_idx" ON "neon_auth"."invitation" ("email");
+CREATE INDEX "invitation_organizationId_idx" ON "neon_auth"."invitation" ("organizationId");
+CREATE UNIQUE INDEX "invitation_pkey" ON "neon_auth"."invitation" ("id");
+CREATE UNIQUE INDEX "jwks_pkey" ON "neon_auth"."jwks" ("id");
+CREATE INDEX "member_organizationId_idx" ON "neon_auth"."member" ("organizationId");
+CREATE UNIQUE INDEX "member_pkey" ON "neon_auth"."member" ("id");
+CREATE INDEX "member_userId_idx" ON "neon_auth"."member" ("userId");
+CREATE UNIQUE INDEX "organization_pkey" ON "neon_auth"."organization" ("id");
+CREATE UNIQUE INDEX "organization_slug_key" ON "neon_auth"."organization" ("slug");
+CREATE UNIQUE INDEX "organization_slug_uidx" ON "neon_auth"."organization" ("slug");
+CREATE UNIQUE INDEX "project_config_endpoint_id_key" ON "neon_auth"."project_config" ("endpoint_id");
+CREATE UNIQUE INDEX "project_config_pkey" ON "neon_auth"."project_config" ("id");
+CREATE UNIQUE INDEX "session_pkey" ON "neon_auth"."session" ("id");
+CREATE UNIQUE INDEX "session_token_key" ON "neon_auth"."session" ("token");
+CREATE INDEX "session_userId_idx" ON "neon_auth"."session" ("userId");
+CREATE UNIQUE INDEX "user_email_key" ON "neon_auth"."user" ("email");
+CREATE UNIQUE INDEX "user_pkey" ON "neon_auth"."user" ("id");
+CREATE INDEX "verification_identifier_idx" ON "neon_auth"."verification" ("identifier");
+CREATE UNIQUE INDEX "verification_pkey" ON "neon_auth"."verification" ("id");
+ALTER TABLE "account" ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "checklist_template_items" ADD CONSTRAINT "checklist_template_items_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "checklist_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "intervention_attachments" ADD CONSTRAINT "intervention_attachments_interventionId_fkey" FOREIGN KEY ("interventionId") REFERENCES "interventions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "intervention_checklist_items" ADD CONSTRAINT "intervention_checklist_items_checklistId_fkey" FOREIGN KEY ("checklistId") REFERENCES "intervention_checklists"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "intervention_checklists" ADD CONSTRAINT "intervention_checklists_interventionId_fkey" FOREIGN KEY ("interventionId") REFERENCES "interventions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "intervention_notes" ADD CONSTRAINT "intervention_notes_interventionId_fkey" FOREIGN KEY ("interventionId") REFERENCES "interventions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "intervention_parts_used" ADD CONSTRAINT "intervention_parts_used_interventionId_fkey" FOREIGN KEY ("interventionId") REFERENCES "interventions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "intervention_parts_used" ADD CONSTRAINT "intervention_parts_used_stockItemId_fkey" FOREIGN KEY ("stockItemId") REFERENCES "stock_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "intervention_planned_materials" ADD CONSTRAINT "intervention_planned_materials_interventionId_fkey" FOREIGN KEY ("interventionId") REFERENCES "interventions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "intervention_planned_materials" ADD CONSTRAINT "intervention_planned_materials_stockItemId_fkey" FOREIGN KEY ("stockItemId") REFERENCES "stock_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "intervention_template_checklist_items" ADD CONSTRAINT "intervention_template_checklist_items_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "intervention_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "intervention_time_entries" ADD CONSTRAINT "intervention_time_entries_interventionId_fkey" FOREIGN KEY ("interventionId") REFERENCES "interventions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "interventions" ADD CONSTRAINT "interventions_machineId_fkey" FOREIGN KEY ("machineId") REFERENCES "machines"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "interventions" ADD CONSTRAINT "interventions_siteId_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "licenses" ADD CONSTRAINT "licenses_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "machine_attachments" ADD CONSTRAINT "machine_attachments_machineId_fkey" FOREIGN KEY ("machineId") REFERENCES "machines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "machine_components" ADD CONSTRAINT "machine_components_machineId_fkey" FOREIGN KEY ("machineId") REFERENCES "machines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "machine_components" ADD CONSTRAINT "machine_components_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "machine_components"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "machine_components" ADD CONSTRAINT "machine_components_stockItemId_fkey" FOREIGN KEY ("stockItemId") REFERENCES "stock_items"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "machine_counter_readings" ADD CONSTRAINT "machine_counter_readings_counterId_fkey" FOREIGN KEY ("counterId") REFERENCES "machine_counters"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "machine_counters" ADD CONSTRAINT "machine_counters_machineId_fkey" FOREIGN KEY ("machineId") REFERENCES "machines"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "machines" ADD CONSTRAINT "machines_siteId_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "purchase_order_items" ADD CONSTRAINT "purchase_order_items_purchaseOrderId_fkey" FOREIGN KEY ("purchaseOrderId") REFERENCES "purchase_orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "purchase_order_items" ADD CONSTRAINT "purchase_order_items_stockItemId_fkey" FOREIGN KEY ("stockItemId") REFERENCES "stock_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "purchase_orders" ADD CONSTRAINT "purchase_orders_siteId_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "purchase_orders" ADD CONSTRAINT "purchase_orders_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "suppliers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "sites" ADD CONSTRAINT "sites_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "stock_inventory_items" ADD CONSTRAINT "stock_inventory_items_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "stock_inventory_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "stock_inventory_items" ADD CONSTRAINT "stock_inventory_items_stockItemId_fkey" FOREIGN KEY ("stockItemId") REFERENCES "stock_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "stock_inventory_sessions" ADD CONSTRAINT "stock_inventory_sessions_siteId_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "stock_item_suppliers" ADD CONSTRAINT "stock_item_suppliers_stockItemId_fkey" FOREIGN KEY ("stockItemId") REFERENCES "stock_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "stock_item_suppliers" ADD CONSTRAINT "stock_item_suppliers_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "suppliers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "stock_items" ADD CONSTRAINT "stock_items_machineId_fkey" FOREIGN KEY ("machineId") REFERENCES "machines"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "stock_items" ADD CONSTRAINT "stock_items_siteId_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "stock_movements" ADD CONSTRAINT "stock_movements_stockItemId_fkey" FOREIGN KEY ("stockItemId") REFERENCES "stock_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "stock_transfer_requests" ADD CONSTRAINT "stock_transfer_requests_fromSiteId_fkey" FOREIGN KEY ("fromSiteId") REFERENCES "sites"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "stock_transfer_requests" ADD CONSTRAINT "stock_transfer_requests_stockItemId_fkey" FOREIGN KEY ("stockItemId") REFERENCES "stock_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "stock_transfer_requests" ADD CONSTRAINT "stock_transfer_requests_toSiteId_fkey" FOREIGN KEY ("toSiteId") REFERENCES "sites"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "tenant_modules" ADD CONSTRAINT "tenant_modules_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "tenant_roles" ADD CONSTRAINT "tenant_roles_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "tenant_users" ADD CONSTRAINT "tenant_users_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "tenant_users" ADD CONSTRAINT "tenant_users_tenantRoleId_fkey" FOREIGN KEY ("tenantRoleId") REFERENCES "tenant_roles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "user_sites" ADD CONSTRAINT "user_sites_siteId_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "user_sites" ADD CONSTRAINT "user_sites_tenantUserId_fkey" FOREIGN KEY ("tenantUserId") REFERENCES "tenant_users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "neon_auth"."account" ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "neon_auth"."user"("id") ON DELETE CASCADE;
+ALTER TABLE "neon_auth"."invitation" ADD CONSTRAINT "invitation_inviterId_fkey" FOREIGN KEY ("inviterId") REFERENCES "neon_auth"."user"("id") ON DELETE CASCADE;
+ALTER TABLE "neon_auth"."invitation" ADD CONSTRAINT "invitation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "neon_auth"."organization"("id") ON DELETE CASCADE;
+ALTER TABLE "neon_auth"."member" ADD CONSTRAINT "member_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "neon_auth"."organization"("id") ON DELETE CASCADE;
+ALTER TABLE "neon_auth"."member" ADD CONSTRAINT "member_userId_fkey" FOREIGN KEY ("userId") REFERENCES "neon_auth"."user"("id") ON DELETE CASCADE;
+ALTER TABLE "neon_auth"."session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "neon_auth"."user"("id") ON DELETE CASCADE;
