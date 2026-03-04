@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma-client-singleton"
 import { ModuleName } from "@prisma/client"
 import { handleServerActionError, success } from "@/lib/errors/error-handler-server"
 import { logger } from "@/lib/errors/error-logger"
+import { createTenantSystemRoles } from "@/lib/permissions/create-tenant-system-roles"
 
 const registerSchema = z.object({
   companyName: z.string().min(2, "Nom d'entreprise trop court").max(100),
@@ -74,6 +75,9 @@ export async function actionRegisterTenant(input: unknown) {
           activatedAt: new Date(),
         },
       })
+
+      // Crée les 4 rôles système du tenant
+      await createTenantSystemRoles(tx, tenant.id)
 
       // Crée le profil utilisateur lié au tenant avec le rôle client_admin
       await tx.tenantUser.create({

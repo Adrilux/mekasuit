@@ -110,7 +110,7 @@ export const ACTION_LABELS: Record<Action, string> = {
 }
 
 // Matrice de permissions pour les rôles système
-const PERMISSION_MATRIX: Record<UserRole, Action[]> = {
+export const PERMISSION_MATRIX: Record<UserRole, Action[]> = {
   super_admin: [
     "machine:create", "machine:update", "machine:archive", "machine:read",
     "intervention:create", "intervention:update", "intervention:close", "intervention:cancel", "intervention:read", "intervention:assign",

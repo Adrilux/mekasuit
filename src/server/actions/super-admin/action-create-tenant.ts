@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma-client-singleton"
 import { auth } from "@/lib/auth/better-auth-server-config"
 import { handleServerActionError, success } from "@/lib/errors/error-handler-server"
 import { ValidationError } from "@/lib/errors/app-error-classes"
+import { createTenantSystemRoles } from "@/lib/permissions/create-tenant-system-roles"
 
 const schema = z.object({
   // Tenant info
@@ -95,7 +96,10 @@ export async function actionCreateTenant(input: unknown) {
       },
     })
 
-    // 4. Create initial site if provided
+    // 4. Create system roles for the tenant
+    await createTenantSystemRoles(prisma, tenant.id)
+
+    // 5. Create initial site if provided
     if (firstSiteName && firstSiteName.trim().length >= 2) {
       await prisma.site.create({
         data: {
@@ -106,7 +110,7 @@ export async function actionCreateTenant(input: unknown) {
       })
     }
 
-    // 5. Handle admin user
+    // 6. Handle admin user
     let tempPassword: string | undefined = undefined
 
     if (adminMode === "existing" && adminEmail) {
