@@ -10,7 +10,7 @@ import { CustomReportDeleteButton } from "@/components/reports/custom-report-del
 
 export default async function CustomReportsPage() {
   const session = await requireSession()
-  assertCan(session.role, "report:read")
+  assertCan(session, "report:read")
 
   const moduleActive = await isModuleActive(session.tenantId, ModuleName.ADVANCED_REPORTS)
   if (!moduleActive) {

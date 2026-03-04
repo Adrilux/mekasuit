@@ -13,7 +13,7 @@ const schema = z.object({ componentId: z.string().min(1) })
 export async function actionDeleteComponent(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const { componentId } = schema.parse(input)
 
@@ -23,7 +23,7 @@ export async function actionDeleteComponent(input: unknown) {
         include: { machine: { select: { siteId: true } } },
       })
       if (!component) throw new NotFoundError("Composant", componentId)
-      assertSiteAccess(session.role, session.siteIds, component.machine.siteId)
+      assertSiteAccess(session, component.machine.siteId)
 
       await tx.machineComponent.delete({ where: { id: componentId } })
     })

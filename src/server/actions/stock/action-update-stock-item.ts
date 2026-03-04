@@ -22,7 +22,7 @@ const schema = z.object({
 export async function actionUpdateStockItem(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:update")
+    assertCan(session, "stock:update")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const data = schema.parse(input)
@@ -33,7 +33,7 @@ export async function actionUpdateStockItem(input: unknown) {
         select: { siteId: true },
       })
       if (!existing) throw new NotFoundError("Article de stock", data.stockItemId)
-      assertSiteAccess(session.role, session.siteIds, existing.siteId)
+      assertSiteAccess(session, existing.siteId)
 
       return tx.stockItem.update({
         where: { id: data.stockItemId },

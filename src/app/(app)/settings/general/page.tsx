@@ -18,7 +18,7 @@ async function getTenantInfo(tenantId: string) {
 
 export default async function SettingsGeneralPage() {
   const session = await requireSession()
-  assertCan(session.role, "module:activate")
+  assertCan(session, "module:activate")
 
   const tenant = await getTenantInfo(session.tenantId)
   if (!tenant) return null

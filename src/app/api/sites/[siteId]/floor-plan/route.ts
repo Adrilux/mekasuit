@@ -2,7 +2,6 @@ import { NextRequest } from "next/server"
 import { writeFile, mkdir, unlink } from "fs/promises"
 import path from "path"
 import { getSession } from "@/lib/auth/auth-session-helpers"
-import { can } from "@/lib/permissions/permission-matrix"
 import { withTenantContext } from "@/lib/db/prisma-with-rls-context"
 import { Prisma } from "@prisma/client"
 
@@ -16,7 +15,7 @@ export async function POST(
   const { siteId } = await params
   const session = await getSession()
   if (!session) return new Response("Unauthorized", { status: 401 })
-  if (!can(session.role, "site:update")) return new Response("Forbidden", { status: 403 })
+  if (!session.permissions.includes("site:update")) return new Response("Forbidden", { status: 403 })
 
   const formData = await req.formData()
   const file = formData.get("file") as File | null

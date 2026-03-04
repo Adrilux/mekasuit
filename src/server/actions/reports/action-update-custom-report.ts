@@ -26,7 +26,7 @@ const schema = z.object({
 export async function actionUpdateCustomReport(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "report:read")
+    assertCan(session, "report:read")
     await assertModuleActive(session.tenantId, ModuleName.ADVANCED_REPORTS)
 
     const { id, ...data } = schema.parse(input)

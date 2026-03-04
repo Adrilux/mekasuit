@@ -8,7 +8,6 @@ import { ModuleName } from "@prisma/client"
 import { queryGetStockTransferById } from "@/server/queries/stock/query-get-stock-transfers"
 import { buildUserNameMap } from "@/server/queries/users/query-get-users-by-auth-ids"
 import { actionResolveStockTransfer } from "@/server/actions/stock/action-resolve-stock-transfer"
-import { can } from "@/lib/permissions/permission-matrix"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
@@ -33,7 +32,7 @@ type Props = {
 export default async function StockTransferDetailPage({ params }: Props) {
   const { requestId } = await params
   const session = await requireSession()
-  assertCan(session.role, "stock:transfer:create")
+  assertCan(session, "stock:transfer:create")
   await assertModuleActive(session.tenantId, ModuleName.INTER_SITE_TRANSFERS)
 
   const transfer = await queryGetStockTransferById(session, requestId)
@@ -42,7 +41,7 @@ export default async function StockTransferDetailPage({ params }: Props) {
   const allIds = [transfer.requestedById, transfer.approvedById].filter(Boolean) as string[]
   const userNames = await buildUserNameMap([...new Set(allIds)])
 
-  const canApprove = can(session.role, "stock:transfer:approve")
+  const canApprove = session.permissions.includes("stock:transfer:approve")
   const isPending = transfer.status === "PENDING"
 
   return (

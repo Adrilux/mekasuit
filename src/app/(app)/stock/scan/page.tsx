@@ -7,7 +7,7 @@ import { StockBarcodeScanner } from "@/components/stock/stock-barcode-scanner"
 
 export default async function StockScanPage() {
   const session = await requireSession()
-  assertCan(session.role, "stock:movement")
+  assertCan(session, "stock:movement")
   await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
   const sites = await queryGetSitesByTenant(session)

@@ -17,7 +17,7 @@ const schema = z.object({
 export async function actionApprovePurchaseOrder(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:po:approve")
+    assertCan(session, "stock:po:approve")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const { orderId } = schema.parse(input)
@@ -28,7 +28,7 @@ export async function actionApprovePurchaseOrder(input: unknown) {
         select: { id: true, siteId: true, status: true },
       })
       if (!order) throw new NotFoundError("Commande fournisseur", orderId)
-      assertSiteAccess(session.role, session.siteIds, order.siteId)
+      assertSiteAccess(session, order.siteId)
 
       if (order.status !== "DRAFT") {
         throw new AppError("Seule une commande en brouillon peut être approuvée", "PO_INVALID_STATUS")

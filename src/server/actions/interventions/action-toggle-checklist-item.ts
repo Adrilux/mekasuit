@@ -16,7 +16,7 @@ const schema = z.object({
 export async function actionToggleChecklistItem(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:update")
+    assertCan(session, "intervention:update")
 
     const data = schema.parse(input)
 

@@ -17,7 +17,7 @@ const schema = z.object({
 export async function actionAnalyzeMachineFailures(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:read")
+    assertCan(session, "intervention:read")
 
     const moduleActive = await isModuleActive(session.tenantId, ModuleName.AI_ASSISTANT)
     if (!moduleActive) {

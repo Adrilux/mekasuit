@@ -13,7 +13,7 @@ const schema = z.object({ counterId: z.string().min(1) })
 export async function actionDeleteCounter(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const { counterId } = schema.parse(input)
 
@@ -23,7 +23,7 @@ export async function actionDeleteCounter(input: unknown) {
         include: { machine: { select: { siteId: true } } },
       })
       if (!counter) throw new NotFoundError("Compteur", counterId)
-      assertSiteAccess(session.role, session.siteIds, counter.machine.siteId)
+      assertSiteAccess(session, counter.machine.siteId)
 
       await tx.machineCounter.delete({ where: { id: counterId } })
     })

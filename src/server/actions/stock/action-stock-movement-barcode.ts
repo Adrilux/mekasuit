@@ -21,11 +21,11 @@ const schema = z.object({
 export async function actionStockMovementBarcode(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:movement")
+    assertCan(session, "stock:movement")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const data = schema.parse(input)
-    assertSiteAccess(session.role, session.siteIds, data.siteId)
+    assertSiteAccess(session, data.siteId)
 
     const result = await withTenantContext(session.tenantId, async (tx: Prisma.TransactionClient) => {
       // Cherche l'article par référence (= code-barre) sur ce site

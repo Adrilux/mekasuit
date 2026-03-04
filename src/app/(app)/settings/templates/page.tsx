@@ -5,7 +5,7 @@ import { InterventionTemplatesManager } from "./intervention-templates-manager"
 
 export default async function InterventionTemplatesPage() {
   const session = await requireSession()
-  assertCan(session.role, "intervention:update")
+  assertCan(session, "intervention:update")
 
   const templates = await queryGetInterventionTemplates(session)
 

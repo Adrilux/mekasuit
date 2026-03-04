@@ -27,10 +27,10 @@ const schema = z.object({
 export async function actionCreateIntervention(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:create")
+    assertCan(session, "intervention:create")
 
     const data = schema.parse(input)
-    assertSiteAccess(session.role, session.siteIds, data.siteId)
+    assertSiteAccess(session, data.siteId)
 
     // La récurrence n'est valide que pour les interventions préventives
     if (data.recurrenceType && data.type !== "PREVENTIVE") {

@@ -16,7 +16,7 @@ const schema = z.object({
 export async function actionRestoreMachine(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:archive") // même permission que l'archivage
+    assertCan(session, "machine:archive") // même permission que l'archivage
 
     const { machineId } = schema.parse(input)
 
@@ -27,7 +27,7 @@ export async function actionRestoreMachine(input: unknown) {
       })
 
       if (!existing) throw new NotFoundError("Machine", machineId)
-      assertSiteAccess(session.role, session.siteIds, existing.siteId)
+      assertSiteAccess(session, existing.siteId)
 
       if (existing.status !== "DECOMMISSIONED") {
         throw new ValidationError("Cette machine n'est pas archivée")

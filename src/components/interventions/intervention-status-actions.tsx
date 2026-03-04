@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/feedback/confirm-dialog"
 import { actionUpdateInterventionStatus } from "@/server/actions/interventions/action-update-intervention-status"
 import { toast } from "sonner"
-import { can } from "@/lib/permissions/permission-matrix"
+
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import type { InterventionStatus, UserRole } from "@prisma/client"
+import type { InterventionStatus } from "@prisma/client"
 
 type StatusAction = {
   label: string
@@ -98,11 +98,11 @@ const ACTIONS_BY_STATUS: Record<string, StatusAction[]> = {
 export function InterventionStatusActions({
   interventionId,
   currentStatus,
-  userRole,
+  userPermissions,
 }: {
   interventionId: string
   currentStatus: InterventionStatus
-  userRole: UserRole
+  userPermissions: string[]
 }) {
   const router = useRouter()
   const [pendingAction, setPendingAction] = useState<StatusAction | null>(null)
@@ -113,7 +113,7 @@ export function InterventionStatusActions({
   const [diagnosis, setDiagnosis] = useState("")
 
   const availableActions = (ACTIONS_BY_STATUS[currentStatus] ?? []).filter((action) =>
-    can(userRole, action.permission)
+    userPermissions.includes(action.permission)
   )
 
   if (availableActions.length === 0) return null

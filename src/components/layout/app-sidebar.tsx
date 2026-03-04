@@ -32,7 +32,8 @@ type NavItem = {
   href: string
   icon: React.ComponentType<{ className?: string }>
   module?: ModuleName
-  roles?: string[]
+  roles?: string[]        // roles enum legacy (super_admin only)
+  permission?: string     // permission requise (nouveau système)
   exact?: boolean
 }
 
@@ -77,8 +78,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Administration",
     items: [
-      { label: "Utilisateurs", href: "/users", icon: Users, roles: ["super_admin", "client_admin"] },
-      { label: "Paramètres", href: "/settings", icon: Settings, roles: ["super_admin", "client_admin"], exact: true },
+      { label: "Utilisateurs", href: "/users", icon: Users, permission: "user:read" },
+      { label: "Paramètres", href: "/settings", icon: Settings, permission: "role:read", exact: true },
       { label: "Super Admin", href: "/admin", icon: Shield, roles: ["super_admin"] },
     ],
   },
@@ -98,6 +99,7 @@ export function AppSidebar({ pendingTransfersCount = 0, draftPurchaseOrdersCount
     return items.filter((item) => {
       if (item.module && !isModuleActive(item.module)) return false
       if (item.roles && !item.roles.includes(session.role)) return false
+      if (item.permission && !session.permissions.includes(item.permission)) return false
       return true
     })
   }

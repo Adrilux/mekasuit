@@ -18,7 +18,7 @@ const schema = z.object({
 export async function actionUpdateInventoryCount(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:movement")
+    assertCan(session, "stock:movement")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const { inventoryItemId, countedQuantity, note } = schema.parse(input)

@@ -4,14 +4,13 @@ import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { assertCan } from "@/lib/permissions/permission-checker-server"
 import { queryGetUsersByTenant } from "@/server/queries/users/query-get-users-by-tenant"
 import { OrgChart } from "@/components/users/org-chart"
-import { can } from "@/lib/permissions/permission-matrix"
 
 export default async function OrgChartPage() {
   const session = await requireSession()
-  assertCan(session.role, "user:read")
+  assertCan(session, "user:read")
 
   const users = await queryGetUsersByTenant(session)
-  const canEdit = can(session.role, "user:update-role")
+  const canEdit = session.permissions.includes("role:assign")
 
   const orgUsers = users.map((u) => ({
     id: u.id,
@@ -20,8 +19,7 @@ export default async function OrgChartPage() {
     email: u.email,
     jobTitle: u.jobTitle,
     managerId: u.managerId,
-    // Encode custom role name inline so OrgChart can display it
-    role: u.tenantRole ? `custom:${u.tenantRole.name}` : u.role,
+    role: u.tenantRole?.name ?? u.role,
     isActive: u.isActive,
   }))
 

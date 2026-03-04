@@ -15,7 +15,7 @@ export default async function NewPurchaseOrderPage({
 }) {
   const { items: itemsParam } = await searchParams
   const session = await requireSession()
-  assertCan(session.role, "stock:po:create")
+  assertCan(session, "stock:po:create")
   await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
   const siteId = session.siteIds[0] ?? ""

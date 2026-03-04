@@ -13,7 +13,7 @@ export default async function NewInventoryPage({
 }) {
   const { siteId } = await searchParams
   const session = await requireSession()
-  assertCan(session.role, "stock:movement")
+  assertCan(session, "stock:movement")
   await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
   if (!siteId) redirect("/stock/inventory")

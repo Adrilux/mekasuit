@@ -3,7 +3,6 @@ import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { withTenantContext } from "@/lib/db/prisma-with-rls-context"
-import { can } from "@/lib/permissions/permission-matrix"
 import { Prisma } from "@prisma/client"
 import { SiteFloorPlanClient } from "@/components/sites/site-floor-plan-client"
 
@@ -51,7 +50,7 @@ export default async function SiteFloorPlanPage({
     })
   })
 
-  const canEdit = can(session.role, "site:update")
+  const canEdit = session.permissions.includes("site:update")
 
   return (
     <div>

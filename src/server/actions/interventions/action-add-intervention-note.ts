@@ -26,7 +26,7 @@ export async function actionAddInterventionNote(input: unknown) {
       })
 
       if (!intervention) throw new NotFoundError("Intervention", interventionId)
-      assertSiteAccess(session.role, session.siteIds, intervention.siteId)
+      assertSiteAccess(session, intervention.siteId)
 
       if (intervention.status === "CANCELLED") {
         throw new ValidationError("Impossible d'ajouter une note à une intervention annulée")

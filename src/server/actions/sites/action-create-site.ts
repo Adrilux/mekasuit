@@ -16,7 +16,7 @@ const schema = z.object({
 export async function actionCreateSite(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "site:create")
+    assertCan(session, "site:create")
     await assertCanAddSite(session.tenantId) // vérifie la limite de licence
 
     const data = schema.parse(input)

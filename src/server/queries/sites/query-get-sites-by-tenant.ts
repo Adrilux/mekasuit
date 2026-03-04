@@ -7,7 +7,7 @@ export async function queryGetSitesByTenant(session: SessionUser) {
     return tx.site.findMany({
       where: {
         // workshop_manager et technicien voient seulement leurs sites
-        ...(["workshop_manager", "technician", "reader"].includes(session.role)
+        ...(!session.permissions.includes("site:view-all")
           ? { id: { in: session.siteIds } }
           : {}),
       },

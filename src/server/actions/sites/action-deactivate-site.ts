@@ -15,7 +15,7 @@ const schema = z.object({
 export async function actionDeactivateSite(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "site:deactivate")
+    assertCan(session, "site:deactivate")
 
     const { siteId } = schema.parse(input)
 

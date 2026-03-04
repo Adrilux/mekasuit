@@ -23,7 +23,7 @@ const schema = z.object({
 export async function actionCreateCounter(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const data = schema.parse(input)
 
@@ -33,7 +33,7 @@ export async function actionCreateCounter(input: unknown) {
         select: { siteId: true },
       })
       if (!machine) throw new NotFoundError("Machine", data.machineId)
-      assertSiteAccess(session.role, session.siteIds, machine.siteId)
+      assertSiteAccess(session, machine.siteId)
 
       return tx.machineCounter.create({
         data: {

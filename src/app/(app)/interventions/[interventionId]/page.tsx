@@ -20,7 +20,6 @@ import { queryGetChecklistTemplates } from "@/server/queries/checklists/query-ge
 import { InterventionAttachments } from "@/components/interventions/intervention-attachments"
 import { InterventionTimeTracking } from "@/components/interventions/intervention-time-tracking"
 import { InterventionChecklists } from "@/components/interventions/intervention-checklists"
-import { can } from "@/lib/permissions/permission-matrix"
 import { InterventionSummaryButton } from "@/components/interventions/intervention-summary-button"
 import { PartsSuggestionButton } from "@/components/interventions/parts-suggestion-button"
 
@@ -52,10 +51,10 @@ export default async function InterventionDetailPage({
 
   if (!intervention) notFound()
 
-  assertSiteAccess(session.role, session.siteIds, intervention.siteId)
+  assertSiteAccess(session, intervention.siteId)
 
   const isTerminal = ["CLOSED", "CANCELLED"].includes(intervention.status)
-  const canEdit = can(session.role, "intervention:update") && !isTerminal
+  const canEdit = session.permissions.includes("intervention:update") && !isTerminal
 
   // Charge le stock si le module est actif
   // - Toujours chargé pour afficher les noms dans les panels (même après clôture)
@@ -129,7 +128,7 @@ export default async function InterventionDetailPage({
         <InterventionStatusActions
           interventionId={intervention.id}
           currentStatus={intervention.status}
-          userRole={session.role}
+          userPermissions={session.permissions}
         />
       )}
 

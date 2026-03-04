@@ -9,7 +9,7 @@ import { ModuleName } from "@prisma/client"
 
 export default async function CustomReportNewPage() {
   const session = await requireSession()
-  assertCan(session.role, "report:read")
+  assertCan(session, "report:read")
 
   const moduleActive = await isModuleActive(session.tenantId, ModuleName.ADVANCED_REPORTS)
   if (!moduleActive) {

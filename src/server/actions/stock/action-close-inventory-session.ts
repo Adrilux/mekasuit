@@ -17,7 +17,7 @@ const schema = z.object({
 export async function actionCloseInventorySession(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:movement")
+    assertCan(session, "stock:movement")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const { sessionId } = schema.parse(input)
@@ -41,7 +41,7 @@ export async function actionCloseInventorySession(input: unknown) {
         },
       })
       if (!inventorySession) throw new NotFoundError("Session d'inventaire", sessionId)
-      assertSiteAccess(session.role, session.siteIds, inventorySession.siteId)
+      assertSiteAccess(session, inventorySession.siteId)
 
       if (inventorySession.status === "CLOSED") {
         throw new AppError("Cette session est déjà clôturée", "INVENTORY_SESSION_CLOSED")

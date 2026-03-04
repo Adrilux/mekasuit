@@ -5,20 +5,19 @@ import { assertCan } from "@/lib/permissions/permission-checker-server"
 import { assertModuleActive } from "@/lib/modules/module-access-checker"
 import { ModuleName } from "@prisma/client"
 import { queryGetLowStockItems } from "@/server/queries/stock/query-get-low-stock-items"
-import { can } from "@/lib/permissions/permission-matrix"
 import { LowStockTable } from "@/components/stock/low-stock-table"
 import { EmptyStatePlaceholder } from "@/components/feedback/empty-state-placeholder"
 import { Button } from "@/components/ui/button"
 
 export default async function LowStockPage() {
   const session = await requireSession()
-  assertCan(session.role, "stock:read")
+  assertCan(session, "stock:read")
   await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
   const siteId = session.siteIds[0] ?? ""
   const items = await queryGetLowStockItems(session, siteId)
 
-  const canOrder = can(session.role, "stock:po:create")
+  const canOrder = session.permissions.includes("stock:po:create")
 
   return (
     <div className="space-y-6">

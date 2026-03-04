@@ -2,7 +2,6 @@ import { NextRequest } from "next/server"
 import { unlink } from "fs/promises"
 import path from "path"
 import { getSession } from "@/lib/auth/auth-session-helpers"
-import { can } from "@/lib/permissions/permission-matrix"
 import { withTenantContext } from "@/lib/db/prisma-with-rls-context"
 import { Prisma } from "@prisma/client"
 
@@ -13,7 +12,7 @@ export async function DELETE(
   const { machineId, attachmentId } = await params
   const session = await getSession()
   if (!session) return new Response("Unauthorized", { status: 401 })
-  if (!can(session.role, "machine:update")) return new Response("Forbidden", { status: 403 })
+  if (!session.permissions.includes("machine:update")) return new Response("Forbidden", { status: 403 })
 
   const attachment = await withTenantContext(session.tenantId, async (tx: Prisma.TransactionClient) => {
     return tx.machineAttachment.findUnique({

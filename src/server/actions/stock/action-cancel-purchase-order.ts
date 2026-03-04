@@ -18,7 +18,7 @@ const schema = z.object({
 export async function actionCancelPurchaseOrder(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:po:cancel")
+    assertCan(session, "stock:po:cancel")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const { orderId, reason } = schema.parse(input)
@@ -29,7 +29,7 @@ export async function actionCancelPurchaseOrder(input: unknown) {
         select: { id: true, siteId: true, status: true },
       })
       if (!order) throw new NotFoundError("Commande fournisseur", orderId)
-      assertSiteAccess(session.role, session.siteIds, order.siteId)
+      assertSiteAccess(session, order.siteId)
 
       if (order.status === "RECEIVED") {
         throw new AppError("Une commande déjà réceptionnée ne peut pas être annulée", "PO_ALREADY_RECEIVED")

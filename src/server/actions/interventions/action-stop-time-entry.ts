@@ -16,7 +16,7 @@ const schema = z.object({
 export async function actionStopTimeEntry(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:update")
+    assertCan(session, "intervention:update")
 
     const data = schema.parse(input)
 
@@ -26,7 +26,9 @@ export async function actionStopTimeEntry(input: unknown) {
         select: { id: true, userId: true, startedAt: true, endedAt: true },
       })
       if (!entry) throw new NotFoundError("Session de pointage", data.entryId)
-      if (entry.userId !== session.id && !["super_admin", "client_admin", "workshop_manager"].includes(session.role)) {
+      const isOwner = entry.userId === session.id
+      const isManager = session.role === "super_admin" || session.permissions.includes("intervention:assign")
+      if (!isOwner && !isManager) {
         throw new ValidationError("Vous ne pouvez pas clore la session d'un autre utilisateur")
       }
       if (entry.endedAt) throw new ValidationError("Cette session est déjà terminée")

@@ -5,7 +5,7 @@ import { MachineForm } from "@/components/machines/machine-form"
 
 export default async function NewMachinePage() {
   const session = await requireSession()
-  assertCan(session.role, "machine:create")
+  assertCan(session, "machine:create")
 
   const sites = await queryGetSitesByTenant(session)
   const activeSites = sites.filter((s) => s.isActive)

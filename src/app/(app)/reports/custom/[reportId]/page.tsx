@@ -45,7 +45,7 @@ export default async function CustomReportDetailPage({
 }) {
   const { reportId } = await params
   const session = await requireSession()
-  assertCan(session.role, "report:read")
+  assertCan(session, "report:read")
 
   const moduleActive = await isModuleActive(session.tenantId, ModuleName.ADVANCED_REPORTS)
   if (!moduleActive) notFound()

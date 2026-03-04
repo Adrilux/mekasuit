@@ -28,11 +28,11 @@ const schema = z.object({
 export async function actionCreatePurchaseOrder(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:po:create")
+    assertCan(session, "stock:po:create")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const data = schema.parse(input)
-    assertSiteAccess(session.role, session.siteIds, data.siteId)
+    assertSiteAccess(session, data.siteId)
 
     const result = await withTenantContext(session.tenantId, async (tx: Prisma.TransactionClient) => {
       const order = await tx.purchaseOrder.create({

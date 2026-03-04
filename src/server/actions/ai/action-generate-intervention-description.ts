@@ -19,7 +19,7 @@ const schema = z.object({
 export async function actionGenerateInterventionDescription(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:create")
+    assertCan(session, "intervention:create")
 
     const moduleActive = await isModuleActive(session.tenantId, ModuleName.AI_ASSISTANT)
     if (!moduleActive) {

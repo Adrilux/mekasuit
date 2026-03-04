@@ -32,7 +32,7 @@ export default async function AuditPage({
 }) {
   const params = await searchParams
   const session = await requireSession()
-  assertCan(session.role, "audit:read")
+  assertCan(session, "audit:read")
 
   const logs = await queryGetAuditLogs(session, {
     entityType: params.entityType,

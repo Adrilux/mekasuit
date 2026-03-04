@@ -8,7 +8,6 @@ import { queryGetPurchaseOrders } from "@/server/queries/stock/query-get-purchas
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EmptyStatePlaceholder } from "@/components/feedback/empty-state-placeholder"
-import { can } from "@/lib/permissions/permission-matrix"
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT:     "Brouillon",
@@ -26,14 +25,14 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | 
 
 export default async function PurchaseOrdersPage() {
   const session = await requireSession()
-  assertCan(session.role, "stock:read")
+  assertCan(session, "stock:read")
   await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
   const siteId = session.siteIds[0] ?? ""
   const orders = await queryGetPurchaseOrders(session, siteId)
 
-  const canCreate  = can(session.role, "stock:po:create")
-  const canApprove = can(session.role, "stock:po:approve")
+  const canCreate  = session.permissions.includes("stock:po:create")
+  const canApprove = session.permissions.includes("stock:po:approve")
 
   const drafts    = orders.filter((o) => o.status === "DRAFT")
   const ordered   = orders.filter((o) => o.status === "ORDERED")

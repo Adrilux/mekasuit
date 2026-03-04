@@ -9,7 +9,7 @@ import { ValidationError } from "@/lib/errors/app-error-classes"
 export default async function EditMachinePage({ params }: { params: Promise<{ machineId: string }> }) {
   const { machineId } = await params
   const session = await requireSession()
-  assertCan(session.role, "machine:update")
+  assertCan(session, "machine:update")
 
   const [machine, sites] = await Promise.all([
     queryGetMachineDetail(session, machineId),
@@ -17,7 +17,7 @@ export default async function EditMachinePage({ params }: { params: Promise<{ ma
   ])
 
   if (!machine) notFound()
-  assertSiteAccess(session.role, session.siteIds, machine.siteId)
+  assertSiteAccess(session, machine.siteId)
 
   if (machine.status === "DECOMMISSIONED") {
     throw new ValidationError("Impossible de modifier une machine archivée")

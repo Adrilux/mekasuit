@@ -22,7 +22,6 @@ import { MachineCounters } from "@/components/machines/machine-counters"
 import { queryGetMachineCounters } from "@/server/queries/machines/query-get-machine-counters"
 import { MachineBom } from "@/components/machines/machine-bom"
 import { queryGetMachineBom } from "@/server/queries/machines/query-get-machine-bom"
-import { can } from "@/lib/permissions/permission-matrix"
 
 export default async function MachineDetailPage({ params }: { params: Promise<{ machineId: string }> }) {
   const { machineId } = await params
@@ -34,7 +33,7 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
 
   if (!machine) notFound()
 
-  assertSiteAccess(session.role, session.siteIds, machine.siteId)
+  assertSiteAccess(session, machine.siteId)
 
   const [stats, counters, bom] = await Promise.all([
     queryGetMachineStats(session, machineId),
@@ -42,10 +41,10 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
     queryGetMachineBom(session, machineId),
   ])
 
-  const canEdit = can(session.role, "machine:update")
-  const canArchive = can(session.role, "machine:archive")
-  const canCreateIntervention = can(session.role, "intervention:create")
-  const canEditStock = can(session.role, "stock:update")
+  const canEdit = session.permissions.includes("machine:update")
+  const canArchive = session.permissions.includes("machine:archive")
+  const canCreateIntervention = session.permissions.includes("intervention:create")
+  const canEditStock = session.permissions.includes("stock:update")
 
   // Determine base URL for QR code
   const hdrs = await headers()

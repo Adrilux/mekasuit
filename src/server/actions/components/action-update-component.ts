@@ -20,7 +20,7 @@ const schema = z.object({
 export async function actionUpdateComponent(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const data = schema.parse(input)
 
@@ -30,7 +30,7 @@ export async function actionUpdateComponent(input: unknown) {
         include: { machine: { select: { siteId: true } } },
       })
       if (!existing) throw new NotFoundError("Composant", data.componentId)
-      assertSiteAccess(session.role, session.siteIds, existing.machine.siteId)
+      assertSiteAccess(session, existing.machine.siteId)
 
       return tx.machineComponent.update({
         where: { id: data.componentId },

@@ -21,13 +21,8 @@ export type PreventiveItem = {
 // Filtrées par les sites de l'utilisateur si nécessaire
 export async function queryGetPreventives(session: SessionUser): Promise<PreventiveItem[]> {
   const siteFilter =
-    ["workshop_manager", "technician", "reader"].includes(session.role) && session.siteIds.length > 0
+    !session.permissions.includes("site:view-all") && session.siteIds.length > 0
       ? { siteId: { in: session.siteIds } }
-      : {}
-
-  const assignedFilter =
-    session.role === "technician"
-      ? { assignedUserId: session.id }
       : {}
 
   return withTenantContext(session.tenantId, async (tx: Prisma.TransactionClient) => {
@@ -36,7 +31,6 @@ export async function queryGetPreventives(session: SessionUser): Promise<Prevent
         type: "PREVENTIVE",
         status: { notIn: ["CLOSED", "CANCELLED"] },
         ...siteFilter,
-        ...assignedFilter,
       },
       orderBy: [
         // Nulls last — sans date planifiée en bas

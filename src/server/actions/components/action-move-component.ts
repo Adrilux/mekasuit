@@ -34,7 +34,7 @@ function getDescendantIds(
 export async function actionMoveComponent(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const data = schema.parse(input)
 
@@ -44,7 +44,7 @@ export async function actionMoveComponent(input: unknown) {
         include: { machine: { select: { siteId: true, id: true } } },
       })
       if (!existing) throw new NotFoundError("Composant", data.componentId)
-      assertSiteAccess(session.role, session.siteIds, existing.machine.siteId)
+      assertSiteAccess(session, existing.machine.siteId)
 
       if (data.newParentId === data.componentId) {
         throw new ValidationError("Un composant ne peut pas être son propre parent")

@@ -9,7 +9,6 @@ import { buildUserNameMap } from "@/server/queries/users/query-get-users-by-auth
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EmptyStatePlaceholder } from "@/components/feedback/empty-state-placeholder"
-import { can } from "@/lib/permissions/permission-matrix"
 
 const STATUS_LABELS: Record<string, string> = {
   PENDING:   "En attente",
@@ -27,7 +26,7 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | 
 
 export default async function StockTransfersPage() {
   const session = await requireSession()
-  assertCan(session.role, "stock:transfer:create")
+  assertCan(session, "stock:transfer:create")
   await assertModuleActive(session.tenantId, ModuleName.INTER_SITE_TRANSFERS)
 
   const transfers = await queryGetStockTransfers(session)
@@ -35,8 +34,8 @@ export default async function StockTransfersPage() {
   const allUserIds = [...new Set(transfers.flatMap((t) => [t.requestedById, t.approvedById].filter(Boolean) as string[]))]
   const userNames = await buildUserNameMap(allUserIds)
 
-  const canApprove = can(session.role, "stock:transfer:approve")
-  const canCreate  = can(session.role, "stock:transfer:create")
+  const canApprove = session.permissions.includes("stock:transfer:approve")
+  const canCreate  = session.permissions.includes("stock:transfer:create")
 
   const pending   = transfers.filter((t) => t.status === "PENDING")
   const resolved  = transfers.filter((t) => t.status !== "PENDING")

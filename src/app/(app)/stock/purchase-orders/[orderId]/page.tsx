@@ -7,7 +7,6 @@ import { assertModuleActive } from "@/lib/modules/module-access-checker"
 import { ModuleName } from "@prisma/client"
 import { queryGetPurchaseOrderById } from "@/server/queries/stock/query-get-purchase-order-by-id"
 import { buildUserNameMap } from "@/server/queries/users/query-get-users-by-auth-ids"
-import { can } from "@/lib/permissions/permission-matrix"
 import { actionApprovePurchaseOrder } from "@/server/actions/stock/action-approve-purchase-order"
 import { actionCancelPurchaseOrder } from "@/server/actions/stock/action-cancel-purchase-order"
 import { Badge } from "@/components/ui/badge"
@@ -42,20 +41,20 @@ export default async function PurchaseOrderDetailPage({
 }) {
   const { orderId } = await params
   const session = await requireSession()
-  assertCan(session.role, "stock:po:create")
+  assertCan(session, "stock:po:create")
   await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
   const order = await queryGetPurchaseOrderById(session, orderId)
   if (!order) notFound()
 
-  assertSiteAccess(session.role, session.siteIds, order.siteId)
+  assertSiteAccess(session, order.siteId)
 
   const allUserIds = [order.createdBy, order.approvedBy].filter(Boolean) as string[]
   const userNames = await buildUserNameMap(allUserIds)
 
-  const canApprove = can(session.role, "stock:po:approve")
-  const canReceive = can(session.role, "stock:po:receive")
-  const canCancel  = can(session.role, "stock:po:cancel")
+  const canApprove = session.permissions.includes("stock:po:approve")
+  const canReceive = session.permissions.includes("stock:po:receive")
+  const canCancel  = session.permissions.includes("stock:po:cancel")
 
   const fullyReceived = order.items.every((i) => i.quantityReceived >= i.quantityOrdered)
   const receivedCount = order.items.filter((i) => i.quantityReceived >= i.quantityOrdered).length

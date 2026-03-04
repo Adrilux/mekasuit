@@ -31,29 +31,28 @@ export async function notifyIfStockLow(input: StockLowCheckInput): Promise<void>
 
   if (minimumLevel <= 0 || newQuantity > minimumLevel) return
 
-  // Trouver les admins et managers du tenant qui ont accès à ce site
-  const managers = await tx.tenantUser.findMany({
+  // Trouver tous les utilisateurs actifs avec la permission notifications:receive
+  // qui ont accès au site (soit via site:view-all, soit via UserSite direct)
+  const usersWithNotifPerm = await tx.tenantUser.findMany({
     where: {
       tenantId,
       isActive: true,
-      role: { in: ["client_admin", "workshop_manager"] },
-      userSites: { some: { siteId } },
+      tenantRole: { permissions: { has: "notifications:receive" } },
     },
-    select: { authUserId: true },
+    select: {
+      authUserId: true,
+      tenantRole: { select: { permissions: true } },
+      userSites: { select: { siteId: true } },
+    },
   })
 
-  // Les client_admin ont accès à tous les sites — les inclure même sans UserSite
-  const admins = await tx.tenantUser.findMany({
-    where: { tenantId, isActive: true, role: "client_admin" },
-    select: { authUserId: true },
-  })
-
-  const userIds = [
-    ...new Set([
-      ...managers.map((u) => u.authUserId),
-      ...admins.map((u) => u.authUserId),
-    ]),
-  ]
+  const userIds = usersWithNotifPerm
+    .filter((u) => {
+      const perms = u.tenantRole?.permissions ?? []
+      // Accès à tous les sites ou assigné à ce site spécifiquement
+      return perms.includes("site:view-all") || u.userSites.some((s) => s.siteId === siteId)
+    })
+    .map((u) => u.authUserId)
 
   if (userIds.length === 0) return
 

@@ -37,7 +37,7 @@ export async function actionConsumePlannedMaterials(input: unknown) {
         select: { siteId: true, status: true },
       })
       if (!intervention) throw new NotFoundError("Intervention", interventionId)
-      assertSiteAccess(session.role, session.siteIds, intervention.siteId)
+      assertSiteAccess(session, intervention.siteId)
 
       if (["CLOSED", "CANCELLED"].includes(intervention.status)) {
         throw new ValidationError("Impossible de consommer des pièces sur une intervention terminée")

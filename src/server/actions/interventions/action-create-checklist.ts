@@ -23,7 +23,7 @@ const schema = z.object({
 export async function actionCreateChecklist(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:update")
+    assertCan(session, "intervention:update")
 
     const data = schema.parse(input)
 
@@ -33,7 +33,7 @@ export async function actionCreateChecklist(input: unknown) {
         select: { siteId: true },
       })
       if (!intervention) throw new NotFoundError("Intervention", data.interventionId)
-      assertSiteAccess(session.role, session.siteIds, intervention.siteId)
+      assertSiteAccess(session, intervention.siteId)
 
       // Items: soit depuis le formulaire, soit depuis un modèle
       let items: { label: string; isRequired: boolean }[] = data.items ?? []

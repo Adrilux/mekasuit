@@ -13,7 +13,7 @@ const schema = z.object({ templateId: z.string().min(1) })
 export async function actionDeleteChecklistTemplate(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:update")
+    assertCan(session, "intervention:update")
 
     const { templateId } = schema.parse(input)
 

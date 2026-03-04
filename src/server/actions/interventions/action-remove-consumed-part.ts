@@ -28,7 +28,7 @@ export async function actionRemoveConsumedPart(input: unknown) {
       })
 
       if (!partUsed) throw new NotFoundError("Pièce consommée", partUsedId)
-      assertSiteAccess(session.role, session.siteIds, partUsed.intervention.siteId)
+      assertSiteAccess(session, partUsed.intervention.siteId)
 
       if (["CLOSED", "CANCELLED"].includes(partUsed.intervention.status)) {
         throw new ValidationError("Impossible de retirer une pièce d'une intervention terminée")

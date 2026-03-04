@@ -4,6 +4,8 @@ import { auth } from "./better-auth-server-config"
 import { prisma } from "@/lib/db/prisma-client-singleton"
 import { serverEnv } from "@/lib/env/env-server-schema"
 import type { UserRole } from "@prisma/client"
+import { ALL_ACTIONS } from "@/lib/permissions/permission-matrix"
+import { getSystemRolePermissions } from "@/lib/permissions/system-roles-definitions"
 
 export type SessionUser = {
   id: string           // authUserId Better Auth
@@ -11,8 +13,29 @@ export type SessionUser = {
   name: string
   tenantId: string
   role: UserRole
+  tenantRoleId: string | null   // ID du TenantRole actif
+  permissions: string[]         // permissions effectives chargées depuis TenantRole
   siteIds: string[]    // sites auxquels l'utilisateur est assigné
   mustChangePassword: boolean
+}
+
+// Résout les permissions effectives d'un TenantUser :
+// 1. Si le rôle est un rôle système (systemRole renseigné) → PERMISSION_MATRIX
+// 2. Sinon → permissions stockées en DB sur TenantRole
+// 3. Fallback role enum legacy si pas de tenantRole
+function resolvePermissions(tenantUser: {
+  role: UserRole
+  tenantRoleId: string | null
+  tenantRole: { id: string; permissions: string[]; systemRole: UserRole | null } | null
+}): string[] {
+  if (tenantUser.tenantRole) {
+    if (tenantUser.tenantRole.systemRole) {
+      return getSystemRolePermissions(tenantUser.tenantRole.systemRole)
+    }
+    return tenantUser.tenantRole.permissions
+  }
+  // Fallback legacy : utilise le champ role (enum) si pas de TenantRole assigné
+  return getSystemRolePermissions(tenantUser.role)
 }
 
 // Récupère la session courante avec les données tenant enrichies
@@ -30,6 +53,8 @@ export async function getSession(): Promise<SessionUser | null> {
       name: session.user.name,
       tenantId: "",
       role: "super_admin",
+      tenantRoleId: null,
+      permissions: [...ALL_ACTIONS, "tenant:manage"],
       siteIds: [],
       mustChangePassword: false,
     }
@@ -40,10 +65,14 @@ export async function getSession(): Promise<SessionUser | null> {
     where: { authUserId: session.user.id },
     include: {
       userSites: { select: { siteId: true } },
+      tenantRole: { select: { id: true, permissions: true, systemRole: true } },
     },
   })
 
   if (!tenantUser || !tenantUser.isActive) return null
+
+  // Résolution des permissions effectives
+  const permissions = resolvePermissions(tenantUser)
 
   // Récupère le flag mustChangePassword depuis la table user Better Auth
   const users = await prisma.$queryRaw<{ mustChangePassword: boolean }[]>`
@@ -57,6 +86,8 @@ export async function getSession(): Promise<SessionUser | null> {
     name: session.user.name,
     tenantId: tenantUser.tenantId,
     role: tenantUser.role,
+    tenantRoleId: tenantUser.tenantRoleId,
+    permissions,
     siteIds: tenantUser.userSites.map((us: { siteId: string }) => us.siteId),
     mustChangePassword,
   }
@@ -89,6 +120,8 @@ export async function requireSession(): Promise<SessionUser> {
       name: authUser.name,
       tenantId: "",
       role: "super_admin",
+      tenantRoleId: null,
+      permissions: [...ALL_ACTIONS, "tenant:manage"],
       siteIds: [],
       mustChangePassword: false,
     }
@@ -99,6 +132,7 @@ export async function requireSession(): Promise<SessionUser> {
     where: { authUserId: authUser.id },
     include: {
       userSites: { select: { siteId: true } },
+      tenantRole: { select: { id: true, permissions: true, systemRole: true } },
     },
   })
 
@@ -106,6 +140,9 @@ export async function requireSession(): Promise<SessionUser> {
   if (!tenantUser || !tenantUser.isActive) {
     redirect("/onboarding")
   }
+
+  // Résolution des permissions effectives
+  const permissions = resolvePermissions(tenantUser)
 
   // Récupère le flag mustChangePassword
   const users = await prisma.$queryRaw<{ mustChangePassword: boolean }[]>`
@@ -119,6 +156,8 @@ export async function requireSession(): Promise<SessionUser> {
     name: authUser.name,
     tenantId: tenantUser.tenantId,
     role: tenantUser.role,
+    tenantRoleId: tenantUser.tenantRoleId,
+    permissions,
     siteIds: tenantUser.userSites.map((us: { siteId: string }) => us.siteId),
     mustChangePassword,
   }

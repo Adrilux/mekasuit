@@ -16,7 +16,7 @@ const schema = z.object({
 export async function actionRegenerateQrSlug(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const { machineId } = schema.parse(input)
 
@@ -26,7 +26,7 @@ export async function actionRegenerateQrSlug(input: unknown) {
         select: { siteId: true },
       })
       if (!existing) throw new NotFoundError("Machine", machineId)
-      assertSiteAccess(session.role, session.siteIds, existing.siteId)
+      assertSiteAccess(session, existing.siteId)
 
       const newSlug = randomUUID()
       return tx.machine.update({

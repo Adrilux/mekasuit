@@ -16,7 +16,7 @@ const schema = z.object({
 export async function actionCreateSupplier(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:update")
+    assertCan(session, "stock:update")
 
     const { name, email, phone } = schema.parse(input)
 

@@ -18,7 +18,7 @@ export default async function MachineQrCodePage({
   const machine = await queryGetMachineDetail(session, machineId)
 
   if (!machine) notFound()
-  assertSiteAccess(session.role, session.siteIds, machine.siteId)
+  assertSiteAccess(session, machine.siteId)
 
   const hdrs = await headers()
   const host = hdrs.get("host") ?? "localhost:3000"

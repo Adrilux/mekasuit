@@ -1,30 +1,30 @@
-import type { UserRole } from "@prisma/client"
-import { can, type Action } from "./permission-matrix"
+import type { SessionUser } from "@/lib/auth/auth-session-helpers"
+import { type Action } from "./permission-matrix"
 import { PermissionError } from "@/lib/errors/app-error-classes"
 
 // Vérifie une permission et lance une erreur si refusée
-// À utiliser dans les Server Actions avant toute opération
-export function assertCan(role: UserRole, action: Action): void {
-  if (!can(role, action)) {
-    throw new PermissionError(`Rôle "${role}" non autorisé pour l'action "${action}"`, {
-      role,
+// Accepte un SessionUser (nouveau) ou un role string (legacy — à migrer)
+export function assertCan(session: SessionUser, action: Action): void {
+  if (session.role === "super_admin") return
+  if (!session.permissions.includes(action)) {
+    throw new PermissionError(`Action "${action}" non autorisée`, {
+      role: session.role,
       action,
     })
   }
 }
 
 // Vérifie qu'un utilisateur accède uniquement aux sites qui lui sont assignés
-// Exception : super_admin et client_admin voient tous les sites de leur tenant
-// Si siteIds est vide pour un rôle restreint, aucune restriction (cohérent avec les queries)
+// Exception : super_admin et utilisateurs avec site:view-all voient tous les sites
 export function assertSiteAccess(
-  role: UserRole,
-  userSiteIds: string[],
+  session: SessionUser,
   targetSiteId: string
 ): void {
-  if (role === "super_admin" || role === "client_admin") return
-  if (userSiteIds.length === 0) return
+  if (session.role === "super_admin") return
+  if (session.permissions.includes("site:view-all")) return
+  if (session.siteIds.length === 0) return
 
-  if (!userSiteIds.includes(targetSiteId)) {
+  if (!session.siteIds.includes(targetSiteId)) {
     throw new PermissionError("Accès à ce site non autorisé", { targetSiteId })
   }
 }

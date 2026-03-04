@@ -23,10 +23,10 @@ const schema = z.object({
 export async function actionCreateMachine(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:create")
+    assertCan(session, "machine:create")
 
     const data = schema.parse(input)
-    assertSiteAccess(session.role, session.siteIds, data.siteId)
+    assertSiteAccess(session, data.siteId)
 
     const result = await withTenantContext(session.tenantId, async (tx: Prisma.TransactionClient) => {
       const machine = await tx.machine.create({

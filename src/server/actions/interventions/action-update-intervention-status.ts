@@ -40,12 +40,12 @@ const schema = z.object({
 export async function actionUpdateInterventionStatus(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:update")
+    assertCan(session, "intervention:update")
 
     const { interventionId, newStatus, actualDurationMinutes, closingDiagnosis } = schema.parse(input)
 
-    if (newStatus === "CLOSED") assertCan(session.role, "intervention:close")
-    if (newStatus === "CANCELLED") assertCan(session.role, "intervention:cancel")
+    if (newStatus === "CLOSED") assertCan(session, "intervention:close")
+    if (newStatus === "CANCELLED") assertCan(session, "intervention:cancel")
 
     const result = await withTenantContext(session.tenantId, async (tx: Prisma.TransactionClient) => {
       const existing = await tx.intervention.findUnique({
@@ -70,7 +70,7 @@ export async function actionUpdateInterventionStatus(input: unknown) {
       })
 
       if (!existing) throw new NotFoundError("Intervention", interventionId)
-      assertSiteAccess(session.role, session.siteIds, existing.siteId)
+      assertSiteAccess(session, existing.siteId)
 
       const allowed = ALLOWED_TRANSITIONS[existing.status]
       if (!allowed.includes(newStatus)) {

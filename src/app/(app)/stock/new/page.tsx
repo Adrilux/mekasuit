@@ -7,7 +7,7 @@ import { StockItemForm } from "@/components/stock/stock-item-form"
 
 export default async function NewStockItemPage() {
   const session = await requireSession()
-  assertCan(session.role, "stock:create")
+  assertCan(session, "stock:create")
   await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
   const sites = await queryGetSitesByTenant(session)

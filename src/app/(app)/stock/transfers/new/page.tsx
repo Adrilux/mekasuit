@@ -7,7 +7,7 @@ import { StockTransferForm } from "@/components/stock/stock-transfer-form"
 
 export default async function NewStockTransferPage() {
   const session = await requireSession()
-  assertCan(session.role, "stock:transfer:create")
+  assertCan(session, "stock:transfer:create")
   await assertModuleActive(session.tenantId, ModuleName.INTER_SITE_TRANSFERS)
 
   const sites = await queryGetSitesByTenant(session)

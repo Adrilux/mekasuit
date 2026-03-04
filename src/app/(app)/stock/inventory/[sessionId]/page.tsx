@@ -6,7 +6,6 @@ import { assertSiteAccess } from "@/lib/permissions/permission-checker-server"
 import { assertModuleActive } from "@/lib/modules/module-access-checker"
 import { ModuleName } from "@prisma/client"
 import { queryGetInventorySessionDetail } from "@/server/queries/stock/query-get-inventory-session-detail"
-import { can } from "@/lib/permissions/permission-matrix"
 import { InventorySessionTable } from "@/components/stock/inventory-session-table"
 
 export default async function InventorySessionPage({
@@ -21,9 +20,9 @@ export default async function InventorySessionPage({
   const inventorySession = await queryGetInventorySessionDetail(session, sessionId)
   if (!inventorySession) notFound()
 
-  assertSiteAccess(session.role, session.siteIds, inventorySession.siteId)
+  assertSiteAccess(session, inventorySession.siteId)
 
-  const canEdit = can(session.role, "stock:movement") && inventorySession.status === "OPEN"
+  const canEdit = session.permissions.includes("stock:movement") && inventorySession.status === "OPEN"
   const countedCount = inventorySession.items.filter((i) => i.countedQuantity !== null).length
 
   return (

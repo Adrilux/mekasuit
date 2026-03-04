@@ -10,7 +10,6 @@ import { EmptyStatePlaceholder } from "@/components/feedback/empty-state-placeho
 import { SiteSwitcher } from "@/components/layout/site-switcher"
 import { StockFilters } from "@/components/stock/stock-filters"
 import { ExportCsvButton } from "@/components/ui/export-csv-button"
-import { can } from "@/lib/permissions/permission-matrix"
 
 export default async function StockPage({
   searchParams,
@@ -33,10 +32,10 @@ export default async function StockPage({
     ? allItems.filter((i) => i.minimumLevel > 0 && i.quantityOnHand <= i.minimumLevel)
     : allItems
 
-  const canCreate = can(session.role, "stock:create")
-  const canScan = can(session.role, "stock:movement")
-  const canInventory = can(session.role, "stock:movement")
-  const canTransfer = can(session.role, "stock:transfer:create") && await isModuleActive(session.tenantId, ModuleName.INTER_SITE_TRANSFERS)
+  const canCreate = session.permissions.includes("stock:create")
+  const canScan = session.permissions.includes("stock:movement")
+  const canInventory = session.permissions.includes("stock:movement")
+  const canTransfer = session.permissions.includes("stock:transfer:create") && await isModuleActive(session.tenantId, ModuleName.INTER_SITE_TRANSFERS)
 
   const lowStockItems = items.filter((i) => i.quantityOnHand <= i.minimumLevel && i.minimumLevel > 0)
   const normalItems = items.filter((i) => i.quantityOnHand > i.minimumLevel || i.minimumLevel === 0)

@@ -18,7 +18,6 @@ import { StockMachineLinkPanel } from "@/components/stock/stock-machine-link-pan
 import { StockSuppliersPanel } from "@/components/stock/stock-suppliers-panel"
 import { StockQrCode } from "@/components/stock/stock-qr-code"
 import { StockMovementHistory } from "@/components/stock/stock-movement-history"
-import { can } from "@/lib/permissions/permission-matrix"
 
 
 export default async function StockItemDetailPage({
@@ -33,11 +32,11 @@ export default async function StockItemDetailPage({
   const item = await queryGetStockItemDetail(session, stockItemId)
   if (!item) notFound()
 
-  assertSiteAccess(session.role, session.siteIds, item.siteId)
+  assertSiteAccess(session, item.siteId)
 
-  const canEdit = can(session.role, "stock:update")
-  const canMove = can(session.role, "stock:movement")
-  const canCancelMovement = can(session.role, "stock:movement:cancel")
+  const canEdit = session.permissions.includes("stock:update")
+  const canMove = session.permissions.includes("stock:movement")
+  const canCancelMovement = session.permissions.includes("stock:movement:cancel")
 
   // Charger les machines, fournisseurs et opérateurs en parallèle
   const [siteMachines, suppliers, itemSuppliers] = await Promise.all([

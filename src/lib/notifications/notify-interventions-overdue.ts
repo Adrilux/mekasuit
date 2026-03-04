@@ -68,12 +68,12 @@ export async function notifyInterventionsOverdue(): Promise<number> {
 
         if (toNotify.length === 0) return
 
-        // Récupérer les managers du tenant pour l'email récap
+        // Récupérer les utilisateurs avec notifications:receive pour l'email récap
         const managers = await tx.tenantUser.findMany({
           where: {
             tenantId: tenant.id,
             isActive: true,
-            role: { in: ["client_admin", "workshop_manager"] },
+            tenantRole: { permissions: { has: "notifications:receive" } },
           },
           select: { authUserId: true },
         })

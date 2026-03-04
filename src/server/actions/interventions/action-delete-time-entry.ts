@@ -13,7 +13,7 @@ const schema = z.object({ entryId: z.string().min(1) })
 export async function actionDeleteTimeEntry(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:update")
+    assertCan(session, "intervention:update")
 
     const { entryId } = schema.parse(input)
 
@@ -25,7 +25,7 @@ export async function actionDeleteTimeEntry(input: unknown) {
       if (!entry) throw new NotFoundError("Session de pointage", entryId)
 
       const isOwner = entry.userId === session.id
-      const isManager = ["super_admin", "client_admin", "workshop_manager"].includes(session.role)
+      const isManager = session.role === "super_admin" || session.permissions.includes("intervention:assign")
       if (!isOwner && !isManager) {
         throw new ValidationError("Vous ne pouvez pas supprimer la session d'un autre utilisateur")
       }

@@ -11,7 +11,6 @@ import { EmptyStatePlaceholder } from "@/components/feedback/empty-state-placeho
 import { SiteSwitcher } from "@/components/layout/site-switcher"
 import { InterventionFilters } from "@/components/interventions/intervention-filters"
 import { ExportCsvButton } from "@/components/ui/export-csv-button"
-import { can } from "@/lib/permissions/permission-matrix"
 import type { InterventionListItem } from "@/server/queries/interventions/query-get-interventions-by-site"
 import type { InterventionStatus, InterventionType, InterventionPriority } from "@prisma/client"
 
@@ -37,7 +36,7 @@ export default async function InterventionsPage({
       })
     : []
 
-  const canCreate = can(session.role, "intervention:create")
+  const canCreate = session.permissions.includes("intervention:create")
 
   // Résolution des noms des techniciens assignés
   const assignedIds = interventions

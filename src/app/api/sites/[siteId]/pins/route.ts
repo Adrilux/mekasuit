@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server"
 import { getSession } from "@/lib/auth/auth-session-helpers"
-import { can } from "@/lib/permissions/permission-matrix"
 import { withTenantContext } from "@/lib/db/prisma-with-rls-context"
 import { Prisma } from "@prisma/client"
 
@@ -11,7 +10,7 @@ export async function PATCH(
   const { siteId } = await params
   const session = await getSession()
   if (!session) return new Response("Unauthorized", { status: 401 })
-  if (!can(session.role, "site:update")) return new Response("Forbidden", { status: 403 })
+  if (!session.permissions.includes("site:update")) return new Response("Forbidden", { status: 403 })
 
   let pins: Record<string, { x: number; y: number }>
   try {

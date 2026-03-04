@@ -5,14 +5,13 @@ import { queryGetPreventives } from "@/server/queries/interventions/query-get-pr
 import { buildUserNameMap } from "@/server/queries/users/query-get-users-by-auth-ids"
 import { queryGetUsersByTenant } from "@/server/queries/users/query-get-users-by-tenant"
 import { Button } from "@/components/ui/button"
-import { can } from "@/lib/permissions/permission-matrix"
 import { PreventiveBoard } from "@/components/preventive/preventive-board"
 
 export default async function PreventivePage() {
   const session = await requireSession()
 
   const interventions = await queryGetPreventives(session)
-  const canCreate = can(session.role, "intervention:create")
+  const canCreate = session.permissions.includes("intervention:create")
 
   // Résolution noms techniciens
   const assignedIds = interventions
@@ -21,7 +20,7 @@ export default async function PreventivePage() {
   const userNameMap = await buildUserNameMap([...new Set(assignedIds)])
 
   // Liste des techniciens disponibles pour l'assignation rapide
-  const members = can(session.role, "user:read")
+  const members = session.permissions.includes("user:read")
     ? await queryGetUsersByTenant(session)
     : []
 
@@ -67,7 +66,7 @@ export default async function PreventivePage() {
           userNameMap={userNameMap}
           technicians={technicians}
           sessionRole={session.role}
-          canAssign={can(session.role, "intervention:assign")}
+          canAssign={session.permissions.includes("intervention:assign")}
         />
       )}
     </div>

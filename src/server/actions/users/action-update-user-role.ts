@@ -1,25 +1,23 @@
 "use server"
 
 import { z } from "zod"
-import { UserRole } from "@prisma/client"
 import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { assertCan } from "@/lib/permissions/permission-checker-server"
 import { prisma } from "@/lib/db/prisma-client-singleton"
 import { handleServerActionError, success } from "@/lib/errors/error-handler-server"
 import { NotFoundError, ValidationError } from "@/lib/errors/app-error-classes"
 
-// Accepte soit un rôle système ("workshop_manager" etc.) soit un rôle custom ("custom:clxxx")
 const schema = z.object({
   tenantUserId: z.string().min(1),
-  roleValue: z.string().min(1),
+  tenantRoleId: z.string().min(1),
 })
 
 export async function actionUpdateUserRole(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "user:update-role")
+    assertCan(session, "role:assign")
 
-    const { tenantUserId, roleValue } = schema.parse(input)
+    const { tenantUserId, tenantRoleId } = schema.parse(input)
 
     const existing = await prisma.tenantUser.findUnique({
       where: { id: tenantUserId },
@@ -38,31 +36,38 @@ export async function actionUpdateUserRole(input: unknown) {
       throw new ValidationError("Le rôle super_admin ne peut pas être modifié ici")
     }
 
-    if (roleValue.startsWith("custom:")) {
-      // Rôle custom — vérifie appartenance au tenant
-      const tenantRoleId = roleValue.slice(7)
-      const tenantRole = await prisma.tenantRole.findUnique({
-        where: { id: tenantRoleId },
-        select: { tenantId: true },
-      })
-      if (!tenantRole || tenantRole.tenantId !== session.tenantId) {
-        throw new NotFoundError("Rôle custom", tenantRoleId)
-      }
-      await prisma.tenantUser.update({
-        where: { id: tenantUserId },
-        data: { tenantRoleId },
-      })
-    } else {
-      // Rôle système — efface le rôle custom éventuel
-      const validSystemRoles: UserRole[] = ["client_admin", "workshop_manager", "technician", "reader"]
-      if (!validSystemRoles.includes(roleValue as UserRole)) {
-        throw new ValidationError("Rôle système invalide")
-      }
-      await prisma.tenantUser.update({
-        where: { id: tenantUserId },
-        data: { role: roleValue as UserRole, tenantRoleId: null },
-      })
+    // Vérifie que le TenantRole appartient bien à ce tenant
+    const tenantRole = await prisma.tenantRole.findUnique({
+      where: { id: tenantRoleId },
+      select: { tenantId: true, systemRole: true },
+    })
+    if (!tenantRole || tenantRole.tenantId !== session.tenantId) {
+      throw new NotFoundError("Rôle", tenantRoleId)
     }
+
+    // Garantie : au moins 1 Administrateur actif doit rester
+    if (tenantRole.systemRole !== "client_admin") {
+      const adminRole = await prisma.tenantRole.findFirst({
+        where: { tenantId: session.tenantId, systemRole: "client_admin" },
+        select: { id: true },
+      })
+      if (adminRole) {
+        const adminCount = await prisma.tenantUser.count({
+          where: { tenantId: session.tenantId, tenantRoleId: adminRole.id, isActive: true },
+        })
+        const isCurrentAdmin = await prisma.tenantUser.findFirst({
+          where: { id: tenantUserId, tenantRoleId: adminRole.id },
+        })
+        if (adminCount <= 1 && isCurrentAdmin) {
+          throw new ValidationError("Impossible : ce tenant doit avoir au moins un Administrateur actif")
+        }
+      }
+    }
+
+    await prisma.tenantUser.update({
+      where: { id: tenantUserId },
+      data: { tenantRoleId, role: tenantRole.systemRole ?? existing.role },
+    })
 
     return success(undefined)
   } catch (error) {

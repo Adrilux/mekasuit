@@ -20,7 +20,7 @@ const schema = z.object({
 export async function actionCreateComponent(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const data = schema.parse(input)
 
@@ -30,7 +30,7 @@ export async function actionCreateComponent(input: unknown) {
         select: { siteId: true },
       })
       if (!machine) throw new NotFoundError("Machine", data.machineId)
-      assertSiteAccess(session.role, session.siteIds, machine.siteId)
+      assertSiteAccess(session, machine.siteId)
 
       if (data.parentId) {
         const parent = await tx.machineComponent.findUnique({

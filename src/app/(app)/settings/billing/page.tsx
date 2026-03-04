@@ -5,7 +5,7 @@ import { CreditCard, Users, MapPin, AlertTriangle, CheckCircle2 } from "lucide-r
 
 export default async function SettingsBillingPage() {
   const session = await requireSession()
-  assertCan(session.role, "module:activate")
+  assertCan(session, "module:activate")
 
   const [license, userCount, siteCount] = await Promise.all([
     prisma.license.findUnique({

@@ -1,24 +1,23 @@
 import { redirect } from "next/navigation"
-import { can, type Action } from "@/lib/permissions/permission-matrix"
-import type { UserRole } from "@prisma/client"
+import type { Action } from "@/lib/permissions/permission-matrix"
 
-// Server Component — vérifie que le rôle courant peut faire l'action demandée
+// Server Component — vérifie que l'utilisateur a la permission demandée
 // Si non autorisé : redirige ou affiche le fallback
 
 export function RolePermissionGuard({
-  role,
+  permissions,
   action,
   children,
   fallback,
   redirectTo = "/dashboard",
 }: {
-  role: UserRole
+  permissions: string[]
   action: Action
   children: React.ReactNode
   fallback?: React.ReactNode
   redirectTo?: string
 }) {
-  if (!can(role, action)) {
+  if (!permissions.includes(action)) {
     if (fallback) return <>{fallback}</>
     redirect(redirectTo)
   }

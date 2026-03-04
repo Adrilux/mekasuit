@@ -22,7 +22,7 @@ const schema = z.object({
 export async function actionUpdateCounter(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const data = schema.parse(input)
 
@@ -32,7 +32,7 @@ export async function actionUpdateCounter(input: unknown) {
         include: { machine: { select: { siteId: true } } },
       })
       if (!counter) throw new NotFoundError("Compteur", data.counterId)
-      assertSiteAccess(session.role, session.siteIds, counter.machine.siteId)
+      assertSiteAccess(session, counter.machine.siteId)
 
       return tx.machineCounter.update({
         where: { id: data.counterId },

@@ -21,7 +21,7 @@ const schema = z.object({
 export async function actionAssignIntervention(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:assign")
+    assertCan(session, "intervention:assign")
 
     const { interventionId, assignedUserId } = schema.parse(input)
 
@@ -33,7 +33,7 @@ export async function actionAssignIntervention(input: unknown) {
         select: { siteId: true, status: true, title: true, scheduledAt: true, priority: true, machine: { select: { name: true } } },
       })
       if (!existing) throw new NotFoundError("Intervention", interventionId)
-      assertSiteAccess(session.role, session.siteIds, existing.siteId)
+      assertSiteAccess(session, existing.siteId)
 
       interventionTitle = existing.title
 

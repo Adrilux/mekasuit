@@ -21,7 +21,7 @@ const schema = z.object({
 export async function actionCreateStockTransfer(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:transfer:create")
+    assertCan(session, "stock:transfer:create")
     await assertModuleActive(session.tenantId, ModuleName.INTER_SITE_TRANSFERS)
 
     const data = schema.parse(input)
@@ -32,7 +32,7 @@ export async function actionCreateStockTransfer(input: unknown) {
 
     const result = await withTenantContext(session.tenantId, async (tx: Prisma.TransactionClient) => {
       // Vérifier accès au site source
-      assertSiteAccess(session.role, session.siteIds, data.fromSiteId)
+      assertSiteAccess(session, data.fromSiteId)
 
       // Vérifier l'article existe et appartient au site source
       const stockItem = await tx.stockItem.findFirst({
@@ -67,12 +67,12 @@ export async function actionCreateStockTransfer(input: unknown) {
         },
       })
 
-      // Notifier les managers/admins qui ont accès au site destination
+      // Notifier les utilisateurs avec notifications:receive (approbateurs transferts)
       const approvers = await tx.tenantUser.findMany({
         where: {
           tenantId: session.tenantId,
           isActive: true,
-          role: { in: ["client_admin", "workshop_manager"] },
+          tenantRole: { permissions: { has: "notifications:receive" } },
         },
         select: { authUserId: true },
       })

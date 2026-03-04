@@ -15,7 +15,7 @@ export default async function EditInterventionPage({
 }) {
   const { interventionId } = await params
   const session = await requireSession()
-  assertCan(session.role, "intervention:update")
+  assertCan(session, "intervention:update")
 
   const [intervention, sites, aiEnabled] = await Promise.all([
     queryGetInterventionDetail(session, interventionId),
@@ -24,7 +24,7 @@ export default async function EditInterventionPage({
   ])
 
   if (!intervention) notFound()
-  assertSiteAccess(session.role, session.siteIds, intervention.siteId)
+  assertSiteAccess(session, intervention.siteId)
 
   if (["CLOSED", "CANCELLED"].includes(intervention.status)) {
     throw new ValidationError("Impossible de modifier une intervention clôturée ou annulée")

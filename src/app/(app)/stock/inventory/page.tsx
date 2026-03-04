@@ -6,7 +6,6 @@ import { ModuleName } from "@prisma/client"
 import { queryGetSitesByTenant } from "@/server/queries/sites/query-get-sites-by-tenant"
 import { queryGetInventorySessions } from "@/server/queries/stock/query-get-inventory-sessions"
 import { Button } from "@/components/ui/button"
-import { can } from "@/lib/permissions/permission-matrix"
 
 export default async function InventoryListPage({
   searchParams,
@@ -23,7 +22,7 @@ export default async function InventoryListPage({
     ?? sites[0]
 
   const sessions = activeSite ? await queryGetInventorySessions(session, activeSite.id) : []
-  const canCreate = can(session.role, "stock:movement")
+  const canCreate = session.permissions.includes("stock:movement")
 
   const openSession = sessions.find((s) => s.status === "OPEN")
 

@@ -24,8 +24,8 @@ export type SuggestedPart = {
 export async function actionSuggestParts(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:read")
-    assertCan(session.role, "stock:read")
+    assertCan(session, "intervention:read")
+    assertCan(session, "stock:read")
 
     const aiActive = await isModuleActive(session.tenantId, ModuleName.AI_ASSISTANT)
     if (!aiActive) {

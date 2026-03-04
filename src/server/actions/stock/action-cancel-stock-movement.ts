@@ -20,7 +20,7 @@ const schema = z.object({
 export async function actionCancelStockMovement(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:movement:cancel")
+    assertCan(session, "stock:movement:cancel")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const { movementId, reason } = schema.parse(input)

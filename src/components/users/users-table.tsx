@@ -12,39 +12,20 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  SelectSeparator,
-  SelectLabel,
-  SelectGroup,
 } from "@/components/ui/select"
 import { UserDeactivateButton } from "@/components/users/user-deactivate-button"
 import { UserReactivateButton } from "@/components/users/user-reactivate-button"
 import { actionUpdateUserRole } from "@/server/actions/users/action-update-user-role"
 import { actionUpdateUserInfo } from "@/server/actions/users/action-update-user-info"
-import type { UserRole } from "@prisma/client"
 import type { TenantUserListItem } from "@/server/queries/users/query-get-users-by-tenant"
 
-const SYSTEM_ROLES: { value: UserRole; label: string }[] = [
-  { value: "client_admin", label: "Administrateur" },
-  { value: "workshop_manager", label: "Chef d'atelier" },
-  { value: "technician", label: "Technicien" },
-  { value: "reader", label: "Lecteur" },
-]
-
-const ROLE_COLORS: Record<string, string> = {
-  super_admin: "bg-red-100 text-red-700",
-  client_admin: "bg-purple-100 text-purple-700",
-  workshop_manager: "bg-blue-100 text-blue-700",
-  technician: "bg-green-100 text-green-700",
-  reader: "bg-slate-100 text-slate-600",
-}
-
 type Site = { id: string; name: string }
-type CustomRole = { id: string; name: string }
+type TenantRole = { id: string; name: string }
 
 type Props = {
   users: TenantUserListItem[]
   allSites: Site[]
-  allCustomRoles: CustomRole[]
+  allRoles: TenantRole[]
   sessionUserId: string
   canEdit: boolean
   canDeactivate: boolean
@@ -53,14 +34,14 @@ type Props = {
 function EditableUserRow({
   user,
   allSites,
-  allCustomRoles,
+  allRoles,
   sessionUserId,
   canEdit,
   canDeactivate,
 }: {
   user: TenantUserListItem
   allSites: Site[]
-  allCustomRoles: CustomRole[]
+  allRoles: TenantRole[]
   sessionUserId: string
   canEdit: boolean
   canDeactivate: boolean
@@ -69,10 +50,7 @@ function EditableUserRow({
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [editName, setEditName] = useState(user.name)
-
-  // roleValue : "workshop_manager" (système) ou "custom:clxxx" (custom)
-  const initialRoleValue = user.tenantRoleId ? `custom:${user.tenantRoleId}` : user.role
-  const [editRoleValue, setEditRoleValue] = useState<string>(initialRoleValue)
+  const [editRoleId, setEditRoleId] = useState<string>(user.tenantRoleId ?? "")
   const [editSiteIds, setEditSiteIds] = useState<string[]>(
     user.userSites.map((us) => us.site.id)
   )
@@ -89,7 +67,7 @@ function EditableUserRow({
 
   function cancelEdit() {
     setEditName(user.name)
-    setEditRoleValue(initialRoleValue)
+    setEditRoleId(user.tenantRoleId ?? "")
     setEditSiteIds(user.userSites.map((us) => us.site.id))
     setEditing(false)
   }
@@ -101,8 +79,8 @@ function EditableUserRow({
     }
     setLoading(true)
 
-    if (editRoleValue !== initialRoleValue) {
-      const r = await actionUpdateUserRole({ tenantUserId: user.id, roleValue: editRoleValue })
+    if (editRoleId && editRoleId !== user.tenantRoleId) {
+      const r = await actionUpdateUserRole({ tenantUserId: user.id, tenantRoleId: editRoleId })
       if (!r.success) { toast.error(r.error); setLoading(false); return }
     }
 
@@ -132,32 +110,16 @@ function EditableUserRow({
           <p className="text-xs text-slate-400 mt-1">{user.email}</p>
         </td>
         <td className="px-4 py-3">
-          <Select value={editRoleValue} onValueChange={setEditRoleValue}>
+          <Select value={editRoleId} onValueChange={setEditRoleId}>
             <SelectTrigger className="h-8 text-xs w-48">
-              <SelectValue />
+              <SelectValue placeholder="Sélectionner un rôle" />
             </SelectTrigger>
             <SelectContent>
-              <SelectGroup>
-                <SelectLabel className="text-xs text-slate-400">Rôles système</SelectLabel>
-                {SYSTEM_ROLES.map((r) => (
-                  <SelectItem key={r.value} value={r.value} className="text-xs">
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-              {allCustomRoles.length > 0 && (
-                <>
-                  <SelectSeparator />
-                  <SelectGroup>
-                    <SelectLabel className="text-xs text-slate-400">Rôles personnalisés</SelectLabel>
-                    {allCustomRoles.map((r) => (
-                      <SelectItem key={r.id} value={`custom:${r.id}`} className="text-xs">
-                        {r.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </>
-              )}
+              {allRoles.map((r) => (
+                <SelectItem key={r.id} value={r.id} className="text-xs">
+                  {r.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </td>
@@ -203,12 +165,7 @@ function EditableUserRow({
     )
   }
 
-  // Affichage : rôle custom en amber, système en couleur selon le rôle
-  const roleLabel = user.tenantRole?.name
-    ?? (SYSTEM_ROLES.find((r) => r.value === user.role)?.label ?? user.role)
-  const roleColor = user.tenantRole
-    ? "bg-amber-100 text-amber-700"
-    : (ROLE_COLORS[user.role] ?? "bg-slate-100 text-slate-600")
+  const roleLabel = user.tenantRole?.name ?? user.role
   const sites = user.userSites.map((us) => us.site.name)
 
   return (
@@ -221,7 +178,7 @@ function EditableUserRow({
         <p className="text-xs text-slate-400">{user.email}</p>
       </td>
       <td className="px-4 py-3">
-        <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${roleColor}`}>
+        <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
           {roleLabel}
         </span>
       </td>
@@ -265,7 +222,7 @@ function EditableUserRow({
   )
 }
 
-export function UsersTable({ users, allSites, allCustomRoles, sessionUserId, canEdit, canDeactivate }: Props) {
+export function UsersTable({ users, allSites, allRoles, sessionUserId, canEdit, canDeactivate }: Props) {
   if (users.length === 0) {
     return (
       <div className="text-center py-16 text-slate-400">
@@ -294,7 +251,7 @@ export function UsersTable({ users, allSites, allCustomRoles, sessionUserId, can
               key={user.id}
               user={user}
               allSites={allSites}
-              allCustomRoles={allCustomRoles}
+              allRoles={allRoles}
               sessionUserId={sessionUserId}
               canEdit={canEdit}
               canDeactivate={canDeactivate}

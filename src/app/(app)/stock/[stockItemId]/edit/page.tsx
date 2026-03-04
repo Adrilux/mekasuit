@@ -14,7 +14,7 @@ export default async function EditStockItemPage({
 }) {
   const { stockItemId } = await params
   const session = await requireSession()
-  assertCan(session.role, "stock:update")
+  assertCan(session, "stock:update")
   await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
   const [item, sites] = await Promise.all([
@@ -23,7 +23,7 @@ export default async function EditStockItemPage({
   ])
 
   if (!item) notFound()
-  assertSiteAccess(session.role, session.siteIds, item.siteId)
+  assertSiteAccess(session, item.siteId)
 
   return (
     <div className="max-w-xl">

@@ -7,24 +7,23 @@ import { queryGetSitesByTenant } from "@/server/queries/sites/query-get-sites-by
 import { queryGetTenantRoles } from "@/server/queries/roles/query-get-tenant-roles"
 import { Button } from "@/components/ui/button"
 import { UsersTable } from "@/components/users/users-table"
-import { can } from "@/lib/permissions/permission-matrix"
 
 export default async function UsersPage() {
   const session = await requireSession()
-  assertCan(session.role, "user:read")
+  assertCan(session, "user:read")
 
-  const [users, sites, customRoles] = await Promise.all([
+  const [users, sites, roles] = await Promise.all([
     queryGetUsersByTenant(session),
     queryGetSitesByTenant(session),
     queryGetTenantRoles(session.tenantId),
   ])
 
-  const canInvite = can(session.role, "user:invite")
-  const canEdit = can(session.role, "user:update-role")
-  const canDeactivate = can(session.role, "user:deactivate")
+  const canInvite = session.permissions.includes("user:invite")
+  const canEdit = session.permissions.includes("role:assign")
+  const canDeactivate = session.permissions.includes("user:deactivate")
 
   const allSites = sites.map((s) => ({ id: s.id, name: s.name }))
-  const allCustomRoles = customRoles.map((r) => ({ id: r.id, name: r.name }))
+  const allRoles = roles.map((r) => ({ id: r.id, name: r.name }))
 
   return (
     <div>
@@ -54,7 +53,7 @@ export default async function UsersPage() {
       <UsersTable
         users={users}
         allSites={allSites}
-        allCustomRoles={allCustomRoles}
+        allRoles={allRoles}
         sessionUserId={session.id}
         canEdit={canEdit}
         canDeactivate={canDeactivate}

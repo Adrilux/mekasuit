@@ -17,7 +17,7 @@ const schema = z.object({
 export async function actionUpdateMachineStatus(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const { machineId, status } = schema.parse(input)
 
@@ -28,7 +28,7 @@ export async function actionUpdateMachineStatus(input: unknown) {
       })
 
       if (!existing) throw new NotFoundError("Machine", machineId)
-      assertSiteAccess(session.role, session.siteIds, existing.siteId)
+      assertSiteAccess(session, existing.siteId)
 
       if (existing.status === "DECOMMISSIONED") {
         throw new ValidationError("Impossible de changer le statut d'une machine archivée")

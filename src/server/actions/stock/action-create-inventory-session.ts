@@ -16,11 +16,11 @@ const schema = z.object({
 export async function actionCreateInventorySession(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:movement")
+    assertCan(session, "stock:movement")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const { siteId } = schema.parse(input)
-    assertSiteAccess(session.role, session.siteIds, siteId)
+    assertSiteAccess(session, siteId)
 
     const result = await withTenantContext(session.tenantId, async (tx: Prisma.TransactionClient) => {
       // Vérifier qu'il n'y a pas déjà une session ouverte sur ce site

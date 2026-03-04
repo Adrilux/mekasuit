@@ -21,7 +21,7 @@ const schema = z.object({
 export async function actionStockMovement(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:movement")
+    assertCan(session, "stock:movement")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const data = schema.parse(input)
@@ -32,7 +32,7 @@ export async function actionStockMovement(input: unknown) {
         select: { id: true, siteId: true, quantityOnHand: true, name: true },
       })
       if (!stockItem) throw new NotFoundError("Article de stock", data.stockItemId)
-      assertSiteAccess(session.role, session.siteIds, stockItem.siteId)
+      assertSiteAccess(session, stockItem.siteId)
 
       // Pour un ajustement en négatif, vérifier qu'on ne descend pas sous 0
       if (data.type === "ADJUSTMENT") {

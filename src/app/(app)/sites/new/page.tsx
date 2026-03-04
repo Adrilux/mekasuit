@@ -4,7 +4,7 @@ import { SiteForm } from "@/components/sites/site-form"
 
 export default async function NewSitePage() {
   const session = await requireSession()
-  assertCan(session.role, "site:create")
+  assertCan(session, "site:create")
 
   return (
     <div className="max-w-md">

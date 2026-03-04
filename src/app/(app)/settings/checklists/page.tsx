@@ -5,7 +5,7 @@ import { ChecklistTemplatesManager } from "./checklist-templates-manager"
 
 export default async function ChecklistTemplatesPage() {
   const session = await requireSession()
-  assertCan(session.role, "intervention:update")
+  assertCan(session, "intervention:update")
 
   const templates = await queryGetChecklistTemplates(session)
 

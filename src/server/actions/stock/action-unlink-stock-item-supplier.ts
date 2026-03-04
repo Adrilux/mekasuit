@@ -14,7 +14,7 @@ const schema = z.object({
 export async function actionUnlinkStockItemSupplier(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:update")
+    assertCan(session, "stock:update")
 
     const { linkId } = schema.parse(input)
 

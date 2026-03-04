@@ -18,7 +18,7 @@ const schema = z.object({
 export async function actionResolveStockTransfer(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:transfer:approve")
+    assertCan(session, "stock:transfer:approve")
     await assertModuleActive(session.tenantId, ModuleName.INTER_SITE_TRANSFERS)
 
     const { transferId, action } = schema.parse(input)

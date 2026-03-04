@@ -33,7 +33,7 @@ export async function actionConsumeStockPart(input: unknown) {
       })
 
       if (!intervention) throw new NotFoundError("Intervention", interventionId)
-      assertSiteAccess(session.role, session.siteIds, intervention.siteId)
+      assertSiteAccess(session, intervention.siteId)
 
       if (intervention.status === "CLOSED" || intervention.status === "CANCELLED") {
         throw new ValidationError("Impossible d'ajouter des pièces à une intervention terminée")

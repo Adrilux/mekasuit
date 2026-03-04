@@ -13,7 +13,7 @@ export default async function NewInterventionPage({
 }) {
   const { machineId, siteId, type } = await searchParams
   const session = await requireSession()
-  assertCan(session.role, "intervention:create")
+  assertCan(session, "intervention:create")
 
   const [sites, aiEnabled, templates] = await Promise.all([
     queryGetSitesByTenant(session),

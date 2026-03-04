@@ -19,7 +19,7 @@ export async function queryGlobalSearch(
   const q = query.trim()
 
   const siteFilter: { siteId?: { in: string[] } } =
-    ["workshop_manager", "technician", "reader"].includes(session.role) && session.siteIds.length > 0
+    !session.permissions.includes("site:view-all") && session.siteIds.length > 0
       ? { siteId: { in: session.siteIds } }
       : {}
 

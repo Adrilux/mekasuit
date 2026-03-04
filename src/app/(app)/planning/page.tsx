@@ -8,7 +8,7 @@ import { CalendarDays } from "lucide-react"
 
 export default async function PlanningPage() {
   const session = await requireSession()
-  assertCan(session.role, "intervention:read")
+  assertCan(session, "intervention:read")
 
   const sites = await queryGetSitesByTenant(session)
   const activeSites = sites.filter((s) => s.isActive)

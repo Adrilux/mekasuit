@@ -38,7 +38,7 @@ export default async function MachineTimelinePage({
 
   const machine = await queryGetMachineDetail(session, machineId)
   if (!machine) notFound()
-  assertSiteAccess(session.role, session.siteIds, machine.siteId)
+  assertSiteAccess(session, machine.siteId)
 
   const events = await queryGetMachineTimeline(session, machineId)
 

@@ -12,7 +12,7 @@ export async function queryGetDashboardStats(
   const siteFilter: { siteId?: string | { in: string[] } } =
     siteId
       ? { siteId }
-      : ["workshop_manager", "technician", "reader"].includes(session.role) && session.siteIds.length > 0
+      : !session.permissions.includes("site:view-all") && session.siteIds.length > 0
         ? { siteId: { in: session.siteIds } }
         : {}
 

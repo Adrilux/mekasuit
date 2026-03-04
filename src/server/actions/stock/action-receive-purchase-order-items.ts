@@ -25,7 +25,7 @@ const schema = z.object({
 export async function actionReceivePurchaseOrderItems(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:po:receive")
+    assertCan(session, "stock:po:receive")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const { orderId, receipts } = schema.parse(input)
@@ -43,7 +43,7 @@ export async function actionReceivePurchaseOrderItems(input: unknown) {
         },
       })
       if (!order) throw new NotFoundError("Commande fournisseur", orderId)
-      assertSiteAccess(session.role, session.siteIds, order.siteId)
+      assertSiteAccess(session, order.siteId)
 
       if (order.status !== "ORDERED") {
         throw new AppError(

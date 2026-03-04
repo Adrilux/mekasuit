@@ -57,7 +57,7 @@ const SETTINGS_SECTIONS = [
 
 export default async function SettingsPage() {
   const session = await requireSession()
-  assertCan(session.role, "module:activate") // seuls client_admin+
+  assertCan(session, "module:activate") // seuls client_admin+
 
   return (
     <div className="max-w-2xl">

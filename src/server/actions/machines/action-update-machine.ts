@@ -22,7 +22,7 @@ const schema = z.object({
 export async function actionUpdateMachine(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const data = schema.parse(input)
 
@@ -34,7 +34,7 @@ export async function actionUpdateMachine(input: unknown) {
       })
 
       if (!existing) throw new NotFoundError("Machine", data.machineId)
-      assertSiteAccess(session.role, session.siteIds, existing.siteId)
+      assertSiteAccess(session, existing.siteId)
 
       return tx.machine.update({
         where: { id: data.machineId },

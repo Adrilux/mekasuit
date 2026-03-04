@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 
 export default async function SettingsModulesPage() {
   const session = await requireSession()
-  assertCan(session.role, "module:activate")
+  assertCan(session, "module:activate")
 
   // Charger tous les modules du tenant (pas RLS-scopé, c'est une table globale)
   const tenantModules = await prisma.tenantModule.findMany({

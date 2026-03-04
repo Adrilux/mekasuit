@@ -26,25 +26,12 @@ export type OrgUser = {
   isActive: boolean
 }
 
-function roleColor(role: string): string {
-  if (role.startsWith("custom:")) return "bg-amber-100 text-amber-700 border-amber-200"
-  switch (role) {
-    case "client_admin": return "bg-purple-100 text-purple-700 border-purple-200"
-    case "workshop_manager": return "bg-blue-100 text-blue-700 border-blue-200"
-    case "technician": return "bg-green-100 text-green-700 border-green-200"
-    default: return "bg-slate-100 text-slate-500 border-slate-200"
-  }
+function roleColor(_role: string): string {
+  return "bg-slate-100 text-slate-700 border-slate-200"
 }
 
 function roleLabel(role: string): string {
-  if (role.startsWith("custom:")) return role.slice(7)
-  switch (role) {
-    case "client_admin": return "Administrateur"
-    case "workshop_manager": return "Chef d'atelier"
-    case "technician": return "Technicien"
-    case "reader": return "Lecteur"
-    default: return role
-  }
+  return role
 }
 
 function OrgCard({

@@ -14,7 +14,7 @@ const schema = z.object({
 export async function actionDeleteRole(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "user:update-role")
+    assertCan(session, "role:update")
 
     const { roleId } = schema.parse(input)
 

@@ -25,7 +25,7 @@ const schema = z.object({
 export async function actionUpdateIntervention(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "intervention:update")
+    assertCan(session, "intervention:update")
 
     const data = schema.parse(input)
 
@@ -43,7 +43,7 @@ export async function actionUpdateIntervention(input: unknown) {
       })
 
       if (!existing) throw new NotFoundError("Intervention", data.interventionId)
-      assertSiteAccess(session.role, session.siteIds, existing.siteId)
+      assertSiteAccess(session, existing.siteId)
 
       if (existing.status === "CLOSED" || existing.status === "CANCELLED") {
         throw new ValidationError("Impossible de modifier une intervention clôturée ou annulée")

@@ -11,7 +11,7 @@ export default async function RolesPage() {
 
   // Seuls client_admin et au-dessus peuvent gérer les rôles
   try {
-    assertCan(session.role, "user:update-role")
+    assertCan(session, "role:update")
   } catch {
     redirect("/dashboard")
   }

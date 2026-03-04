@@ -1,14 +1,13 @@
 "use server"
 
 import { z } from "zod"
-import { UserRole } from "@prisma/client"
 import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { assertCan } from "@/lib/permissions/permission-checker-server"
 import { assertCanAddUser } from "@/lib/license/license-limits-checker"
 import { auth } from "@/lib/auth/better-auth-server-config"
 import { prisma } from "@/lib/db/prisma-client-singleton"
 import { handleServerActionError, success } from "@/lib/errors/error-handler-server"
-import { ValidationError } from "@/lib/errors/app-error-classes"
+import { NotFoundError, ValidationError } from "@/lib/errors/app-error-classes"
 import { logger } from "@/lib/errors/error-logger"
 import { sendEmail } from "@/lib/email/email-sender"
 import { buildInviteUserEmail } from "@/lib/email/templates/email-invite-user"
@@ -17,7 +16,7 @@ import { serverEnv } from "@/lib/env/env-server-schema"
 const schema = z.object({
   name: z.string().min(2, "Nom trop court").max(100),
   email: z.string().email("Email invalide"),
-  role: z.nativeEnum(UserRole).exclude(["super_admin"]),
+  tenantRoleId: z.string().min(1, "Sélectionnez un rôle"),
   siteIds: z.array(z.string()).min(1, "Assignez au moins un site"),
 })
 
@@ -30,17 +29,18 @@ function generateTempPassword(): string {
 export async function actionInviteUser(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "user:invite")
+    assertCan(session, "user:invite")
     await assertCanAddUser(session.tenantId)
 
     const data = schema.parse(input)
 
-    // Un workshop_manager ne peut inviter que des techniciens et des lecteurs
-    if (
-      session.role === "workshop_manager" &&
-      !["technician", "reader"].includes(data.role)
-    ) {
-      throw new ValidationError("Vous ne pouvez inviter que des techniciens ou des lecteurs")
+    // Vérifie que le TenantRole appartient bien à ce tenant
+    const tenantRole = await prisma.tenantRole.findUnique({
+      where: { id: data.tenantRoleId },
+      select: { tenantId: true, systemRole: true },
+    })
+    if (!tenantRole || tenantRole.tenantId !== session.tenantId) {
+      throw new NotFoundError("Rôle", data.tenantRoleId)
     }
 
     // Vérifie si un utilisateur Better Auth avec cet email existe déjà
@@ -96,7 +96,8 @@ export async function actionInviteUser(input: unknown) {
         data: {
           tenantId: session.tenantId,
           authUserId,
-          role: data.role,
+          role: tenantRole.systemRole ?? "reader",
+          tenantRoleId: data.tenantRoleId,
           isActive: true,
         },
       })
@@ -112,7 +113,7 @@ export async function actionInviteUser(input: unknown) {
 
     logger.info("Utilisateur invité", {
       email: data.email,
-      role: data.role,
+      tenantRoleId: data.tenantRoleId,
       tenantId: session.tenantId,
       accountCreated,
     })

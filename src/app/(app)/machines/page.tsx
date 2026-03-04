@@ -11,7 +11,6 @@ import { SiteSwitcher } from "@/components/layout/site-switcher"
 import { MachineFilters } from "@/components/machines/machine-filters"
 import { ExportCsvButton } from "@/components/ui/export-csv-button"
 import { MachineArchiveButton } from "@/components/machines/machine-archive-button"
-import { can } from "@/lib/permissions/permission-matrix"
 
 const PAGE_SIZE = 25
 
@@ -45,8 +44,8 @@ export default async function MachinesPage({
   const totalPages = Math.max(1, Math.ceil(machines.length / PAGE_SIZE))
   const paginatedMachines = machines.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  const canCreate = can(session.role, "machine:create")
-  const canArchive = can(session.role, "machine:archive")
+  const canCreate = session.permissions.includes("machine:create")
+  const canArchive = session.permissions.includes("machine:archive")
 
   const exportParams = new URLSearchParams()
   if (activeSite) exportParams.set("siteId", activeSite.id)

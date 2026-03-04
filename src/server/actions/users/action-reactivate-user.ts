@@ -12,7 +12,7 @@ const schema = z.object({ tenantUserId: z.string().min(1) })
 export async function actionReactivateUser(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "user:deactivate") // même permission que désactiver
+    assertCan(session, "user:deactivate") // même permission que désactiver
 
     const { tenantUserId } = schema.parse(input)
 

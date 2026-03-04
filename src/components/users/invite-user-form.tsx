@@ -10,27 +10,6 @@ import { actionInviteUser } from "@/server/actions/users/action-invite-user"
 import { toast } from "sonner"
 import { Copy, CheckCircle2, Key } from "lucide-react"
 import type { SiteListItem } from "@/server/queries/sites/query-get-sites-by-tenant"
-import type { UserRole } from "@prisma/client"
-
-// Les rôles qu'un workshop_manager peut assigner sont limités
-const ROLES_BY_INVITER: Record<string, { value: UserRole; label: string }[]> = {
-  workshop_manager: [
-    { value: "technician", label: "Technicien" },
-    { value: "reader", label: "Lecteur" },
-  ],
-  client_admin: [
-    { value: "client_admin", label: "Administrateur" },
-    { value: "workshop_manager", label: "Chef d'atelier" },
-    { value: "technician", label: "Technicien" },
-    { value: "reader", label: "Lecteur" },
-  ],
-  super_admin: [
-    { value: "client_admin", label: "Administrateur" },
-    { value: "workshop_manager", label: "Chef d'atelier" },
-    { value: "technician", label: "Technicien" },
-    { value: "reader", label: "Lecteur" },
-  ],
-}
 
 type InviteResult = {
   status: "created" | "linked"
@@ -38,20 +17,20 @@ type InviteResult = {
   tempPassword?: string
 }
 
+type TenantRole = { id: string; name: string }
+
 export function InviteUserForm({
   sites,
-  userRole,
+  roles,
 }: {
   sites: Pick<SiteListItem, "id" | "name">[]
-  userRole: UserRole
+  roles: TenantRole[]
 }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [selectedSites, setSelectedSites] = useState<string[]>([])
   const [result, setResult] = useState<InviteResult | null>(null)
   const [copied, setCopied] = useState(false)
-
-  const availableRoles = ROLES_BY_INVITER[userRole] ?? ROLES_BY_INVITER.client_admin
 
   function toggleSite(siteId: string) {
     setSelectedSites((prev) =>
@@ -80,7 +59,7 @@ export function InviteUserForm({
     const res = await actionInviteUser({
       name: form.get("name") as string,
       email: form.get("email") as string,
-      role: form.get("role") as UserRole,
+      tenantRoleId: form.get("tenantRoleId") as string,
       siteIds: selectedSites,
     })
 
@@ -182,14 +161,14 @@ export function InviteUserForm({
       </div>
 
       <div>
-        <Label htmlFor="role">Rôle *</Label>
-        <Select name="role" defaultValue={availableRoles[availableRoles.length - 1]?.value} required>
-          <SelectTrigger id="role" className="mt-1">
-            <SelectValue />
+        <Label htmlFor="tenantRoleId">Rôle *</Label>
+        <Select name="tenantRoleId" defaultValue={roles[roles.length - 1]?.id} required>
+          <SelectTrigger id="tenantRoleId" className="mt-1">
+            <SelectValue placeholder="Sélectionner un rôle" />
           </SelectTrigger>
           <SelectContent>
-            {availableRoles.map((role) => (
-              <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
+            {roles.map((role) => (
+              <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>

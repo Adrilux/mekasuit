@@ -5,12 +5,11 @@ import { queryGetSitesByTenant } from "@/server/queries/sites/query-get-sites-by
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EmptyStatePlaceholder } from "@/components/feedback/empty-state-placeholder"
-import { can } from "@/lib/permissions/permission-matrix"
 
 export default async function SitesPage() {
   const session = await requireSession()
   const sites = await queryGetSitesByTenant(session)
-  const canCreate = can(session.role, "site:create")
+  const canCreate = session.permissions.includes("site:create")
 
   return (
     <div>
@@ -71,7 +70,7 @@ export default async function SitesPage() {
                 <Link href={`/sites/${site.id}/plan`} className="text-xs text-blue-600 hover:underline">
                   Plan 2D
                 </Link>
-                {can(session.role, "site:update") && (
+                {session.permissions.includes("site:update") && (
                   <>
                     <span className="text-slate-300">·</span>
                     <Link href={`/sites/${site.id}/edit`} className="text-xs text-slate-500 hover:underline">

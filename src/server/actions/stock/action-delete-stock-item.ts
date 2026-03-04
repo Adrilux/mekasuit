@@ -15,7 +15,7 @@ const schema = z.object({ stockItemId: z.string().min(1) })
 export async function actionDeleteStockItem(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "stock:update")
+    assertCan(session, "stock:update")
     await assertModuleActive(session.tenantId, ModuleName.STOCK_MANAGEMENT)
 
     const { stockItemId } = schema.parse(input)
@@ -26,7 +26,7 @@ export async function actionDeleteStockItem(input: unknown) {
         select: { siteId: true, name: true, _count: { select: { movements: true, partsUsed: true } } },
       })
       if (!item) throw new NotFoundError("Article de stock", stockItemId)
-      assertSiteAccess(session.role, session.siteIds, item.siteId)
+      assertSiteAccess(session, item.siteId)
 
       if (item._count.movements > 0 || item._count.partsUsed > 0) {
         throw new ValidationError(

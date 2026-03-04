@@ -18,7 +18,7 @@ const schema = z.object({
 export async function actionAddCounterReading(input: unknown) {
   try {
     const session = await requireSession()
-    assertCan(session.role, "machine:update")
+    assertCan(session, "machine:update")
 
     const data = schema.parse(input)
 
@@ -30,7 +30,7 @@ export async function actionAddCounterReading(input: unknown) {
         },
       })
       if (!counter) throw new NotFoundError("Compteur", data.counterId)
-      assertSiteAccess(session.role, session.siteIds, counter.machine.siteId)
+      assertSiteAccess(session, counter.machine.siteId)
 
       // La valeur du relevé doit être >= valeur courante (compteur monotone)
       if (data.value < counter.currentValue) {
