@@ -36,7 +36,7 @@ Gérer les demandes et ordres de travail (OT) de maintenance.
 | ✅ Impression fiche | Fiche intervention imprimable (HTML → PDF navigateur) | Imprimer |
 | ✅ Annulation | Annuler une intervention avec traçabilité | Annuler |
 | ✅ Pièces jointes | Photos avant/après, documents PDF. Stockage local VPS. Max 10 Mo. | Ajouter, supprimer, télécharger |
-| ✅ Pointage heures | Technicien démarre/stoppe une session de pointage. Plusieurs sessions possibles. Total calculé automatiquement. | Démarrer chrono, stopper, supprimer session, voir total |
+| ⚠️ Pointage heures | Saisie a posteriori : heure début + heure fin (pas de chrono temps réel). Mini planning journalier. Adapté au terrain : technicien renseigne après l'intervention. Plusieurs sessions possibles. Total calculé. | Saisir heure début/fin, supprimer session, voir total |
 | ✅ Checklists | Liste de points à valider. Items requis marqués *. Modèles réutilisables configurables dans /settings/checklists | Cocher item, ajouter item à la volée, créer depuis modèle, supprimer checklist |
 | 🔲 Signature électronique | Signature du technicien et/ou du responsable à la clôture. Stockée comme image | Signer sur mobile, voir signature, invalider |
 | 🔲 SLA / temps de réponse | Délai maximum par priorité (ex: critical = 2h). Alerte si dépassé. Suivi taux de respect | Configurer SLA par priorité, voir alertes dépassement |
@@ -49,7 +49,7 @@ Planifier la maintenance préventive.
 | ✅ Récurrence automatique | À la clôture d'une préventive, la suivante est créée automatiquement selon la fréquence (hebdo, mensuelle, etc.) | Configurer fréquence, date fin récurrence |
 | ✅ Matériaux prévus | Liste de pièces planifiées pour une préventive. ⚠️ Dépend du module Stock — masqué si Stock inactif | Ajouter, modifier, supprimer, consommer tout en masse |
 | ✅ Chaîne de récurrence | Vue de toutes les occurrences passées et futures d'une même préventive | Lecture |
-| ✅ Planning visuel | Calendrier mois/semaine des interventions planifiées. Couleur par priorité, clic → fiche intervention. Route /planning | Voir calendrier, changer vue mois/semaine |
+| ⚠️ Planning visuel | Calendrier des interventions planifiées. Couleur par priorité, clic → fiche intervention. Route /planning. Vues : jour, semaine, mois, trimestre, semestre, année | Voir calendrier, changer vue |
 | ✅ Modèles d'intervention | Créer un modèle réutilisable (nom, description, type, priorité, checklist). Pré-remplit le formulaire à la création. Géré dans /settings/templates | Créer modèle, modifier, supprimer, utiliser à la création |
 | ✅ Déclenchement par compteur | Quand un compteur machine atteint un seuil → créer automatiquement une préventive. Seuil recalibré par intervalle après déclenchement | Configurer seuil + intervalle sur le compteur, lié au modèle d'intervention |
 
@@ -69,6 +69,9 @@ Gérer le référentiel des pièces et consommables.
 | ✅ QR code article | Générer et imprimer une étiquette QR code par article (référence + nom). Accès direct à la fiche via scan | Générer, imprimer étiquette (bouton "Étiquette QR" sur la fiche) |
 | ✅ Fournisseurs | Lier un article à un ou plusieurs fournisseurs avec référence fournisseur et prix d'achat. Panneau sur la fiche article | Créer fournisseur, lier article, modifier, délier |
 | ✅ Délai réapprovisionnement | Délai estimé en jours par lien article-fournisseur. Visible dans le panneau fournisseurs | Configurer lors du lien article↔fournisseur |
+| 🔲 Liens URL fournisseur | Ajouter un ou plusieurs liens URL par article-fournisseur (ex: page produit Würth, Manutan). Objectif : panier groupé automatique par fournisseur | Ajouter URL, ouvrir dans onglet, supprimer |
+| 🔲 Image article | Photo par article pour identification visuelle rapide. Stockage local VPS | Ajouter image, supprimer, voir sur fiche |
+| 🔲 Filtre "Tous les sites" stock | Vue globale du stock selon permissions user (pas limité au site actif) | Filtrer par site ou tous sites |
 
 ### 2.2 Mouvements de stock
 
@@ -185,7 +188,7 @@ Gérer le référentiel des pièces et consommables.
 | Module | Statut | Fonctionnalités existantes | À développer |
 |---|---|---|---|
 | GMAO | ✅ Obligatoire | Machines (fiche, notes, pièces jointes, timeline, statut, archivage/restauration, QR code régénérable, compteurs + déclenchement préventive, BOM), interventions (pièces jointes, pointage heures, checklists + modèles de checklist), préventives (récurrence, matériaux, chaîne, planning /planning, modèles d'intervention, déclenchement compteur) | Signature électronique, SLA |
-| Stock | ✅ Optionnel (dépend GMAO) | Catalogue (fiche, QR code étiquette, fournisseurs + délai réappro), mouvements (avec annulation), inventaire physique, consommation sur intervention, scan barcode, alertes rupture, transferts, commandes fournisseurs (BC workflow + réception partielle + ruptures) | — |
+| Stock | ✅ Optionnel (dépend GMAO) | Catalogue (fiche, QR code étiquette, fournisseurs + délai réappro), mouvements (avec annulation), inventaire physique, consommation sur intervention, scan barcode, alertes rupture, transferts, commandes fournisseurs (BC workflow + réception partielle + ruptures) | Liens URL fournisseur, image article, filtre tous sites |
 | Rapports avancés | ✅ Optionnel | MTBF, charge technicien, coût maintenance, taux disponibilité, SLA, export PDF, rapports personnalisés | — |
 | Assistant IA | ✅ Optionnel | Génération description intervention, analyse pannes récurrentes (/ai-assistant/machines), suggestion pièces (fiche intervention), résumé clôture | — |
 | Notifications | ✅ Inclus | In-app (6 types) + Email événements (Resend, best-effort) | Récap planifié |

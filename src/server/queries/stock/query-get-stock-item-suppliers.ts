@@ -9,6 +9,7 @@ export type StockItemSupplierDetail = {
   supplierReference: string | null
   purchasePriceCents: number
   leadTimeDays: number | null
+  productUrls: string[]
 }
 
 export async function queryGetStockItemSuppliers(
@@ -25,6 +26,7 @@ export async function queryGetStockItemSuppliers(
         supplierReference: true,
         purchasePriceCents: true,
         leadTimeDays: true,
+        productUrls: true,
       },
       orderBy: { supplier: { name: "asc" } },
     })
@@ -35,6 +37,7 @@ export async function queryGetStockItemSuppliers(
       supplierReference: l.supplierReference,
       purchasePriceCents: l.purchasePriceCents,
       leadTimeDays: l.leadTimeDays,
+      productUrls: l.productUrls,
     }))
   })
 }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { EmptyStatePlaceholder } from "@/components/feedback/empty-state-placeholder"
 import { SiteSwitcher } from "@/components/layout/site-switcher"
 import { StockFilters } from "@/components/stock/stock-filters"
+import { StockTable } from "@/components/stock/stock-table"
 import { ExportCsvButton } from "@/components/ui/export-csv-button"
 
 export default async function StockPage({
@@ -132,47 +133,7 @@ export default async function StockPage({
           }
         />
       ) : (
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Référence</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Désignation</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Stock</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Seuil</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">Coût unit.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...lowStockItems, ...normalItems].map((item) => {
-                const isLow = item.quantityOnHand <= item.minimumLevel && item.minimumLevel > 0
-                return (
-                  <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{item.reference}</td>
-                    <td className="px-4 py-3">
-                      <Link href={`/stock/${item.id}`} className="font-medium text-slate-900 hover:text-blue-600">
-                        {item.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`font-semibold ${isLow ? "text-amber-600" : "text-slate-900"}`}>
-                        {item.quantityOnHand}
-                      </span>
-                      <span className="text-slate-400 ml-1 text-xs">{item.unit}</span>
-                      {isLow && <AlertTriangle className="w-3 h-3 text-amber-500 inline ml-1" />}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">{item.minimumLevel} {item.unit}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {item.unitCostCents > 0 ? `${(item.unitCostCents / 100).toFixed(2)} €` : "—"}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-          </div>
-        </div>
+        <StockTable items={[...lowStockItems, ...normalItems]} />
       )}
     </div>
   )

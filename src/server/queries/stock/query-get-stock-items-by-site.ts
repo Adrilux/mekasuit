@@ -34,6 +34,7 @@ export async function queryGetStockItemsBySite(session: SessionUser, filterOrSit
         quantityOnHand: true,
         minimumLevel: true,
         unitCostCents: true,
+        imageUrl: true,
         createdAt: true,
         updatedAt: true,
       },

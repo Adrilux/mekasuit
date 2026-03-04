@@ -2,7 +2,7 @@ import { requireSession } from "@/lib/auth/auth-session-helpers"
 import { assertCan } from "@/lib/permissions/permission-checker-server"
 import { queryGetInterventionsCalendar } from "@/server/queries/interventions/query-get-interventions-calendar"
 import { queryGetSitesByTenant } from "@/server/queries/sites/query-get-sites-by-tenant"
-import { startOfMonth, endOfMonth, subMonths, addMonths } from "date-fns"
+import { startOfYear, endOfYear, subYears, addYears } from "date-fns"
 import { InterventionCalendar } from "@/components/interventions/intervention-calendar"
 import { CalendarDays } from "lucide-react"
 
@@ -15,8 +15,9 @@ export default async function PlanningPage() {
   const siteId = activeSites[0]?.id
 
   const now = new Date()
-  const from = startOfMonth(subMonths(now, 1))
-  const to = endOfMonth(addMonths(now, 2))
+  // Wide range to support year/semester views (previous + current + next year)
+  const from = startOfYear(subYears(now, 1))
+  const to = endOfYear(addYears(now, 1))
 
   const interventions = siteId
     ? await queryGetInterventionsCalendar(session, siteId, from, to)

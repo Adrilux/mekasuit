@@ -14,6 +14,7 @@ const schema = z.object({
   supplierReference: z.string().max(200).optional().or(z.literal("")),
   purchasePriceCents: z.number().int().min(0).default(0),
   leadTimeDays: z.number().int().min(1).max(999).nullable().optional(),
+  productUrls: z.array(z.string().url()).max(10).optional().default([]),
 })
 
 export async function actionUpsertStockItemSupplier(input: unknown) {
@@ -21,7 +22,7 @@ export async function actionUpsertStockItemSupplier(input: unknown) {
     const session = await requireSession()
     assertCan(session, "stock:update")
 
-    const { stockItemId, supplierId, supplierReference, purchasePriceCents, leadTimeDays } = schema.parse(input)
+    const { stockItemId, supplierId, supplierReference, purchasePriceCents, leadTimeDays, productUrls } = schema.parse(input)
 
     await withTenantContext(session.tenantId, async (tx: Prisma.TransactionClient) => {
       // Vérifier que l'article appartient au tenant
@@ -47,11 +48,13 @@ export async function actionUpsertStockItemSupplier(input: unknown) {
           supplierReference: supplierReference || null,
           purchasePriceCents,
           leadTimeDays: leadTimeDays ?? null,
+          productUrls,
         },
         update: {
           supplierReference: supplierReference || null,
           purchasePriceCents,
           leadTimeDays: leadTimeDays ?? null,
+          productUrls,
         },
       })
     })

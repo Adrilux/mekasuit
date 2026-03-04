@@ -604,6 +604,7 @@ model StockItem {
   quantityOnHand Int      @default(0)
   minimumLevel   Int      @default(0)        // seuil d'alerte de rupture
   unitCostCents  Int      @default(0)        // coût unitaire en centimes (évite les flottants)
+  imageUrl       String?                     // photo de l'article pour identification visuelle
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -647,6 +648,7 @@ model StockItemSupplier {
   supplierReference  String?   // référence de l'article chez le fournisseur
   purchasePriceCents Int       @default(0) // prix d'achat en centimes
   leadTimeDays       Int?      // délai de réapprovisionnement en jours
+  productUrls        String[]  // URLs produit chez ce fournisseur (catalogue, fiche technique...)
 
   @@unique([stockItemId, supplierId])
   @@index([tenantId, stockItemId])

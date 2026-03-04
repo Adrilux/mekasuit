@@ -4,6 +4,17 @@
 
 ---
 
+## 0. DASHBOARD
+
+| Point | Statut | Notes |
+|---|---|---|
+| Vue d'ensemble | ⚠️ | Manque d'organisation. Notifications trop nombreuses, côte à côte/superposées, fatigue visuelle |
+| Couleurs | ⚠️ | Usage excessif rouge/orange — nuit à l'ergonomie |
+| Filtre par atelier/site | ✅ | Pertinent, à conserver |
+| Restructuration complète | ❌ | Vue hiérarchisée, claire, agréable. KPIs prioritaires en haut, alertes regroupées, moins de bruit visuel |
+
+---
+
 ## 1.1 MACHINES
 
 ### Fiche machine — Champs
@@ -62,6 +73,7 @@
 | Page publique scan terrain | ✅ | `/m/[slug]` — accessible sans login |
 | Redirection post-login | ✅ | `?next=/m/[slug]` conservé après connexion |
 | Régénération du slug | ✅ | Bouton "Régénérer" avec avertissement — nouveau UUID |
+| **Impression QR code — BUGGÉ** | ❌ | Bouton d'impression non fonctionnel sur la page `/machines/[id]/qr-code` |
 
 ### Archivage
 
@@ -120,6 +132,12 @@
 | Modèles de checklists | ✅ | CRUD dans `/settings/checklists` — `ChecklistTemplate` |
 | Chaîne de récurrence | ✅ | Vue de toutes les occurrences passées et futures |
 
+### Améliorations UX demandées
+
+| Point | Statut | Notes |
+|---|---|---|
+| Pointage heures — remplacer chrono | ❌ | Saisie a posteriori : heure début/fin, mini planning journalier. Pas de chrono temps réel |
+
 ### Restant
 
 - Signature électronique (non demandée pour l'instant)
@@ -138,6 +156,13 @@
 | Planning visuel | ✅ | Route `/planning` — calendrier mois/semaine, couleur par priorité, clic → fiche |
 | Modèles d'intervention | ✅ | CRUD dans `/settings/templates` — `InterventionTemplate` + checklist items. Pré-remplit le formulaire à la création |
 | Déclenchement par compteur | ✅ | Quand un relevé de compteur atteint le seuil → préventive créée automatiquement. Seuil recalibré par intervalle |
+
+### Améliorations UX demandées
+
+| Point | Statut | Notes |
+|---|---|---|
+| Vue préventive — mur/liste verticale | ❌ | Interface plus visuelle, moins d'infos simultanées, tri rapide |
+| Planning — vues supplémentaires | ❌ | Actuellement : mois/semaine. À ajouter : jour, trimestre, semestre, année |
 
 ### Restant
 
@@ -160,6 +185,16 @@
 | Délai réapprovisionnement | ✅ | Champ `leadTimeDays` sur le lien `StockItemSupplier` — affiché dans le panneau fournisseurs |
 | Inventaire physique | ✅ | Session couvrant tous les articles du site. Route `/stock/inventory`. Saisie comptage avec écart en temps réel, validation → ajustements ADJUSTMENT en masse. `StockInventorySession` + `StockInventoryItem` |
 | Annulation mouvement | ✅ | Workshop manager+, sans limite de temps. TRANSFER non annulables. Génère ADJUSTMENT compensatoire + `cancelledAt/By/Reason` sur le mouvement. Composant `StockMovementHistory` client |
+
+### Améliorations UX demandées
+
+| Point | Statut | Notes |
+|---|---|---|
+| Ligne article entièrement cliquable | ❌ | Actuellement seule la désignation est cliquable — toute la ligne doit l'être |
+| Image article | ❌ | Ajouter une photo par article pour identification visuelle rapide |
+| Liens URL fournisseur par article | ❌ | Ex : même pièce achetable chez Würth ET Manutan. Objectif : panier groupé par fournisseur |
+| Filtre "Tous les sites" dans stock | ❌ | Filtre global par site dans la liste stock (selon permissions user) |
+| Filtre "Tous les sites" en rupture | ❌ | Section "Articles en rupture" : filtre site ou vue globale |
 
 ---
 
@@ -208,6 +243,12 @@
 | Rapport SLA | ✅ | `queryGetSlaReport` — SLA fixes : CRITICAL 4h, HIGH 24h, MEDIUM 72h, LOW 168h. BarChart groupé Dans les délais / Hors délais |
 | Export PDF | ✅ | Page `/reports/print?siteId&from&to` — rendu HTML épuré + `@media print` + auto-print via `window.onload`. Tous les 5 rapports inclus |
 | Rapport personnalisé | ✅ | `CustomReport` modèle DB (colonnes[], filtres JSON). CRUD actions. Pages `/reports/custom` (liste), `/reports/custom/new`, `/reports/custom/[id]`, `/reports/custom/[id]/edit`. Composant `CustomReportBuilder` (cases à cocher colonnes, filtres, aperçu, sauvegarde) |
+
+### Améliorations UX demandées
+
+| Point | Statut | Notes |
+|---|---|---|
+| Restructurer la page rapports | ❌ | Trop de rapports sans hiérarchie. Proposer une structure guidée, pédagogique et ergonomique |
 
 ---
 

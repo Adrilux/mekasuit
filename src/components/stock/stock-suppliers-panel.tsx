@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Truck, Plus, Trash2, Pencil } from "lucide-react"
+import { Truck, Plus, Trash2, Pencil, ExternalLink, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -30,6 +30,8 @@ type LinkFormState = {
   supplierReference: string
   purchasePriceEur: string
   leadTimeDays: string
+  productUrls: string[]
+  newUrlInput: string
 }
 
 const EMPTY_FORM: LinkFormState = {
@@ -39,6 +41,8 @@ const EMPTY_FORM: LinkFormState = {
   supplierReference: "",
   purchasePriceEur: "",
   leadTimeDays: "",
+  productUrls: [],
+  newUrlInput: "",
 }
 
 export function StockSuppliersPanel({ stockItemId, initialLinks, suppliers: initialSuppliers, canEdit }: Props) {
@@ -66,9 +70,24 @@ export function StockSuppliersPanel({ stockItemId, initialLinks, suppliers: init
       supplierReference: link.supplierReference ?? "",
       purchasePriceEur: link.purchasePriceCents > 0 ? (link.purchasePriceCents / 100).toFixed(2) : "",
       leadTimeDays: link.leadTimeDays != null ? String(link.leadTimeDays) : "",
+      productUrls: link.productUrls,
+      newUrlInput: "",
     })
     setError(null)
     setDialogOpen(true)
+  }
+
+  function addUrl() {
+    const url = form.newUrlInput.trim()
+    if (!url) return
+    if (!/^https?:\/\/.+/.test(url)) { setError("URL invalide (doit commencer par http:// ou https://)"); return }
+    if (form.productUrls.length >= 10) { setError("Maximum 10 URLs par fournisseur"); return }
+    setError(null)
+    setForm((f) => ({ ...f, productUrls: [...f.productUrls, url], newUrlInput: "" }))
+  }
+
+  function removeUrl(index: number) {
+    setForm((f) => ({ ...f, productUrls: f.productUrls.filter((_, i) => i !== index) }))
   }
 
   function handleSubmit() {
@@ -76,7 +95,6 @@ export function StockSuppliersPanel({ stockItemId, initialLinks, suppliers: init
     startTransition(async () => {
       let supplierId = form.supplierId
 
-      // Créer fournisseur si mode "new"
       if (form.mode === "new") {
         if (!form.newSupplierName.trim()) {
           setError("Le nom du fournisseur est requis")
@@ -102,22 +120,23 @@ export function StockSuppliersPanel({ stockItemId, initialLinks, suppliers: init
         supplierReference: form.supplierReference || undefined,
         purchasePriceCents: isNaN(purchasePriceCents) ? 0 : purchasePriceCents,
         leadTimeDays: leadTimeDays && !isNaN(leadTimeDays) ? leadTimeDays : null,
+        productUrls: form.productUrls,
       })
 
       if (!res.success) { setError(res.error ?? "Erreur inconnue"); return }
 
-      // Rafraîchir la liste locale
       const supplierName = form.mode === "new"
         ? form.newSupplierName.trim()
         : (allSuppliers.find((s) => s.id === supplierId)?.name ?? "")
 
       const newLink: StockItemSupplierDetail = {
-        id: editingLink?.id ?? supplierId, // temporaire si nouveau
+        id: editingLink?.id ?? supplierId,
         supplierId,
         supplierName,
         supplierReference: form.supplierReference || null,
         purchasePriceCents: isNaN(purchasePriceCents) ? 0 : purchasePriceCents,
         leadTimeDays: leadTimeDays && !isNaN(leadTimeDays) ? leadTimeDays : null,
+        productUrls: form.productUrls,
       }
 
       if (editingLink) {
@@ -142,10 +161,9 @@ export function StockSuppliersPanel({ stockItemId, initialLinks, suppliers: init
     })
   }
 
-  // Fournisseurs non encore liés (pour éviter les doublons dans le select)
   const linkedIds = new Set(links.map((l) => l.supplierId))
   const availableSuppliers = allSuppliers.filter((s) => {
-    if (editingLink) return true // en mode édition, tout afficher
+    if (editingLink) return true
     return !linkedIds.has(s.id)
   })
 
@@ -170,59 +188,63 @@ export function StockSuppliersPanel({ stockItemId, initialLinks, suppliers: init
       {links.length === 0 ? (
         <p className="text-sm text-slate-400">Aucun fournisseur lié</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <th className="text-left py-2 pr-4 font-medium text-slate-600">Fournisseur</th>
-                <th className="text-left py-2 pr-4 font-medium text-slate-600">Réf. fournisseur</th>
-                <th className="text-left py-2 pr-4 font-medium text-slate-600">Prix achat</th>
-                <th className="text-left py-2 pr-4 font-medium text-slate-600">Délai réappro</th>
-                {canEdit && <th className="py-2 w-16" />}
-              </tr>
-            </thead>
-            <tbody>
-              {links.map((link) => (
-                <tr key={link.id} className="border-b border-slate-50 hover:bg-slate-50">
-                  <td className="py-2.5 pr-4 font-medium text-slate-800">{link.supplierName}</td>
-                  <td className="py-2.5 pr-4 font-mono text-xs text-slate-600">
-                    {link.supplierReference ?? <span className="text-slate-300">—</span>}
-                  </td>
-                  <td className="py-2.5 pr-4 text-slate-700">
-                    {link.purchasePriceCents > 0
-                      ? `${(link.purchasePriceCents / 100).toFixed(2)} €`
-                      : <span className="text-slate-300">—</span>}
-                  </td>
-                  <td className="py-2.5 pr-4 text-slate-700">
-                    {link.leadTimeDays != null
-                      ? `${link.leadTimeDays} j`
-                      : <span className="text-slate-300">—</span>}
-                  </td>
-                  {canEdit && (
-                    <td className="py-2.5">
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => { openEdit(link) }}
-                          className="p-1 text-slate-400 hover:text-blue-600 rounded"
-                          title="Modifier"
+        <div className="space-y-2">
+          {links.map((link) => (
+            <div key={link.id} className="border border-slate-100 rounded-lg p-3 hover:bg-slate-50">
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-sm font-medium text-slate-800">{link.supplierName}</p>
+                  <div className="flex flex-wrap gap-3 text-xs text-slate-500">
+                    {link.supplierReference && (
+                      <span className="font-mono">{link.supplierReference}</span>
+                    )}
+                    {link.purchasePriceCents > 0 && (
+                      <span>{(link.purchasePriceCents / 100).toFixed(2)} €</span>
+                    )}
+                    {link.leadTimeDays != null && (
+                      <span>{link.leadTimeDays} j délai</span>
+                    )}
+                  </div>
+                  {link.productUrls.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {link.productUrls.map((url, i) => (
+                        <a
+                          key={i}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => { e.stopPropagation() }}
+                          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-0.5 rounded"
                         >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => { handleDelete(link) }}
-                          disabled={isPending}
-                          className="p-1 text-slate-400 hover:text-red-600 rounded"
-                          title="Supprimer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
+                          <ExternalLink className="w-3 h-3" />
+                          {new URL(url).hostname.replace("www.", "")}
+                        </a>
+                      ))}
+                    </div>
                   )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </div>
+                {canEdit && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => { openEdit(link) }}
+                      className="p-1 text-slate-400 hover:text-blue-600 rounded"
+                      title="Modifier"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => { handleDelete(link) }}
+                      disabled={isPending}
+                      className="p-1 text-slate-400 hover:text-red-600 rounded"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -324,6 +346,50 @@ export function StockSuppliersPanel({ stockItemId, initialLinks, suppliers: init
                   className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+            </div>
+
+            {/* URLs produit */}
+            <div>
+              <label className="block text-xs text-slate-500 mb-1.5">
+                Liens produit ({form.productUrls.length}/10)
+              </label>
+              {form.productUrls.length > 0 && (
+                <div className="space-y-1 mb-2">
+                  {form.productUrls.map((url, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-slate-50 rounded px-2 py-1.5">
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 text-xs text-blue-600 hover:underline truncate"
+                      >
+                        {url}
+                      </a>
+                      <button
+                        onClick={() => { removeUrl(i) }}
+                        className="text-slate-400 hover:text-red-500 shrink-0"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {form.productUrls.length < 10 && (
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={form.newUrlInput}
+                    onChange={(e) => { setForm((f) => ({ ...f, newUrlInput: e.target.value })); setError(null) }}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addUrl() } }}
+                    className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={addUrl}>
+                    Ajouter
+                  </Button>
+                </div>
+              )}
             </div>
 
             {error && <p className="text-xs text-red-600">{error}</p>}

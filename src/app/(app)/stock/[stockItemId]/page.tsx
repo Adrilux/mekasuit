@@ -18,6 +18,7 @@ import { StockMachineLinkPanel } from "@/components/stock/stock-machine-link-pan
 import { StockSuppliersPanel } from "@/components/stock/stock-suppliers-panel"
 import { StockQrCode } from "@/components/stock/stock-qr-code"
 import { StockMovementHistory } from "@/components/stock/stock-movement-history"
+import { StockItemImage } from "@/components/stock/stock-item-image"
 
 
 export default async function StockItemDetailPage({
@@ -62,7 +63,13 @@ export default async function StockItemDetailPage({
     <div className="max-w-3xl space-y-6">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
+        <div className="flex items-start gap-4">
+          <StockItemImage
+            stockItemId={item.id}
+            imageUrl={item.imageUrl ?? null}
+            canEdit={canEdit}
+          />
+          <div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl font-bold text-slate-900">{item.name}</h1>
             {isLowStock && (
@@ -73,6 +80,7 @@ export default async function StockItemDetailPage({
             )}
           </div>
           <p className="text-sm text-slate-500 font-mono mt-1">{item.reference}</p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           {canMove && (
