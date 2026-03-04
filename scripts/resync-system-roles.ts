@@ -105,34 +105,17 @@ const SYSTEM_ROLE_NAME_MAP: Record<string, UserRole> = {
 
 // Rôles à créer pour chaque tenant (super_admin exclu — global)
 const TENANT_SYSTEM_ROLES: { systemRole: UserRole; name: string }[] = [
-  { systemRole: "client_admin",     name: "Administrateur" },
-  { systemRole: "workshop_manager", name: "Responsable Atelier" },
-  { systemRole: "technician",       name: "Technicien" },
-  { systemRole: "reader",           name: "Lecteur" },
+  { systemRole: "client_admin", name: "Administrateur" },
 ]
+
+// Rôles système obsolètes à supprimer
+const OBSOLETE_SYSTEM_ROLES: UserRole[] = ["workshop_manager", "technician", "reader"]
 
 // ============================================================
 
 async function applyMigrationIfNeeded() {
-  // Vérifie si la colonne systemRole existe déjà
-  const result = await prisma.$queryRaw<{ exists: boolean }[]>`
-    SELECT EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'tenant_roles' AND column_name = 'systemRole'
-    ) as exists
-  `
-  if (result[0]?.exists) {
-    console.log("  ✓ Colonne systemRole déjà présente")
-    return
-  }
-
-  console.log("  → Ajout de la colonne systemRole...")
-  await prisma.$executeRaw`ALTER TABLE tenant_roles ADD COLUMN "systemRole" "UserRole"`
-  await prisma.$executeRaw`
-    CREATE UNIQUE INDEX IF NOT EXISTS "tenant_roles_tenantId_systemRole_key"
-    ON tenant_roles("tenantId", "systemRole")
-  `
-  console.log("  ✓ Colonne et index créés")
+  // Colonne systemRole déjà présente via migration Prisma — rien à faire
+  console.log("  ✓ Colonne systemRole déjà présente (migration appliquée)")
 }
 
 async function resync() {
@@ -183,7 +166,31 @@ async function resync() {
       console.log(`  ✅ "${role.name}" → systemRole="${mappedSystemRole}" + permissions mises à jour`)
     }
 
-    // 2. Créer les rôles système manquants
+    // 2. Supprimer les rôles système obsolètes (réassigner les users vers client_admin)
+    const adminRole = await prisma.tenantRole.findFirst({
+      where: { tenantId: tenant.id, systemRole: "client_admin" },
+    })
+
+    for (const obsoleteRole of OBSOLETE_SYSTEM_ROLES) {
+      const roleToDelete = await prisma.tenantRole.findFirst({
+        where: { tenantId: tenant.id, systemRole: obsoleteRole },
+      })
+      if (!roleToDelete) continue
+
+      // Réassigner les users liés vers client_admin
+      const affected = await prisma.tenantUser.updateMany({
+        where: { tenantId: tenant.id, tenantRoleId: roleToDelete.id },
+        data: { tenantRoleId: adminRole?.id ?? null },
+      })
+      if (affected.count > 0) {
+        console.log(`  ↗️  ${affected.count} user(s) réassigné(s) de "${roleToDelete.name}" → client_admin`)
+      }
+
+      await prisma.tenantRole.delete({ where: { id: roleToDelete.id } })
+      console.log(`  🗑️  Rôle obsolète supprimé : "${roleToDelete.name}" (${obsoleteRole})`)
+    }
+
+    // 3. Créer les rôles système manquants
     for (const { systemRole, name } of TENANT_SYSTEM_ROLES) {
       const alreadyExists = await prisma.tenantRole.findFirst({
         where: { tenantId: tenant.id, systemRole },
@@ -216,7 +223,7 @@ async function resync() {
       console.log(`  ➕ Créé rôle système "${finalName}" (${systemRole})`)
     }
 
-    // 3. Assigner tenantRoleId aux TenantUser sans rôle custom
+    // 4. Assigner tenantRoleId aux TenantUser sans rôle custom
     const usersWithoutRole = await prisma.tenantUser.findMany({
       where: { tenantId: tenant.id, tenantRoleId: null, role: { not: "super_admin" } },
       select: { id: true, role: true },

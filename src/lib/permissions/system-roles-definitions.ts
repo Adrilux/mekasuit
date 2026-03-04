@@ -13,10 +13,7 @@ export const SYSTEM_ROLE_LABELS: Record<UserRole, string> = {
 // Définitions complètes des rôles système à créer à l'init d'un tenant
 // (super_admin exclu — géré globalement, pas par tenant)
 export const TENANT_SYSTEM_ROLES: { systemRole: UserRole; name: string }[] = [
-  { systemRole: "client_admin",     name: SYSTEM_ROLE_LABELS.client_admin },
-  { systemRole: "workshop_manager", name: SYSTEM_ROLE_LABELS.workshop_manager },
-  { systemRole: "technician",       name: SYSTEM_ROLE_LABELS.technician },
-  { systemRole: "reader",           name: SYSTEM_ROLE_LABELS.reader },
+  { systemRole: "client_admin", name: SYSTEM_ROLE_LABELS.client_admin },
 ]
 
 // Retourne les permissions d'un rôle système depuis PERMISSION_MATRIX
